@@ -1,0 +1,6 @@
+logLevel: 'DEBUG'
+logs: './logs'
+bot:
+  token: 'BotToken'
+  prefix: '!'
+  owners: ['id1', 'id2']
