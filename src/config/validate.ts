@@ -17,7 +17,7 @@ export default function validate<T extends Conf>(ref: T, obj: any): void {
 
     for (let i = 0; i < reference.length; i += 1) {
         const key = reference[i];
-        if (key === 'name') {
+        if (key === 'name' || key === 'timeouts') {
             continue;
         }
         if (!(objKeys.includes(key))) {

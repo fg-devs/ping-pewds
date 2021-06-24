@@ -4,3 +4,6 @@ bot:
   token: 'BotToken'
   prefix: '!'
   owners: ['id1', 'id2']
+  blockTimeout: 10 # delay in minutes to stop blocking pings if a specific user has spoken
+  block: ['id to block pings for', 'id to block pings for 2']
+  excludedChannels: [] # Channel IDs that should be ignored by the bot
