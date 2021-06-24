@@ -5,6 +5,7 @@
 lib
 config.yml
 logs
+last-message.json
 
 .idea
 # User-specific stuff
