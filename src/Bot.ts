@@ -4,17 +4,22 @@ import {CONFIG} from "./globals";
 import {Logger} from "./utils/logger";
 import IssueHandler from "./IssueHandler";
 import EventHandler from "./EventHandler";
+import {PingController} from "./controllers/PingController";
 
 export default class Bot extends CommandoClient {
     private static bot: Bot;
 
     private readonly events: EventHandler;
 
+    private readonly pingController: PingController;
+
     constructor() {
         super({
             commandPrefix: CONFIG.bot.prefix,
             owner: CONFIG.bot.owners,
         });
+
+        this.pingController = new PingController(this);
 
         this.events = new EventHandler(this);
         this.registerEvents();
@@ -40,6 +45,10 @@ export default class Bot extends CommandoClient {
 
     public async start() {
         await this.login(CONFIG.bot.token)
+    }
+
+    public getPingController() {
+        return this.pingController;
     }
 
     public static getBot() {
