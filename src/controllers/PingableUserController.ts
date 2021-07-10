@@ -1,7 +1,7 @@
 import Controller from "./controller";
 import Bot from "../Bot";
 import {CONFIG} from "../globals";
-import {Message as DiscordMessage} from "discord.js";
+import {Message as DiscordMessage, TextChannel} from "discord.js";
 import Timeout = NodeJS.Timeout;
 
 type Message = DiscordMessage & {
@@ -15,6 +15,9 @@ export class PingableUserController extends Controller {
     } = {};
 
     private usersLastMessage: { [s: string]: number } = {};
+    private notifyTimeouts: {
+        [s: string]: Timeout;
+    } = {}
 
     constructor(bot: Bot) {
         super(bot, 'PingableUserController')
@@ -41,19 +44,56 @@ export class PingableUserController extends Controller {
 
             const now = Date.now();
             await this.extend(message.author.id, now);
-            log.debug(`message sent by '${message.author.username}' at ${now}... Waiting until ${this.getTimeoutAfter(now)}`)
+
+            await this.notify(message);
+            log.debug(`message sent by '${message.author.username}' at ${now}... Waiting until ${now + CONFIG.bot.blockTimeout * 1000 * 60}`)
 
             return true;
         }
         return false;
     }
 
-    private getTimeoutAfter(timestamp: number) {
-        return timestamp + CONFIG.bot.blockTimeout * 1000 * 60
+    public async notify(message: Message, timeout = CONFIG.bot.notifyTimeout) {
+        const authorId = message.author.id;
+        let resetting = false;
+        if (this.notifyTimeouts[authorId]) {
+            resetting = true;
+            this.clearTimeout(authorId)
+        }
+
+        this.notifyTimeouts[authorId] = setTimeout(() => {
+            CONFIG.bot.notifyChannels.map(async (channelId) => {
+                const channel = await message.guild?.channels.resolve(channelId) as TextChannel;
+                if (channel && channel.type === 'text') {
+                    // const notifiedRoles = CONFIG.bot.notifyRoles.map((roleId) => `<@&${roleId}>`)
+                    await channel.send({
+                        content: `<@${authorId}> doesn't seem to be around anymore, you can rest your eyes`,
+                        allowedMentions: { users: [] },
+                    })
+                }
+            })
+            delete this.notifyTimeouts[authorId]
+        }, timeout * 1000 * 60);
+
+        if (resetting)
+            return;
+
+        await Promise.all(CONFIG.bot.notifyChannels.map(async (channelId) => {
+            const channel = await message.guild?.channels.resolve(channelId) as TextChannel;
+            if (channel && channel.type === 'text') {
+                const notifiedRoles = CONFIG.bot.notifyRoles.map((roleId) => `<@&${roleId}>`)
+                const link = `https://discord.com/channels/${message.guild?.id}/${message.channel.id}/${message.id}`
+                await channel.send({
+                    content: `${notifiedRoles.join(', ')}, <@${authorId}> has made an appearance! I'll notify you once some time has past since they have sent a message.\n${link}`,
+                    allowedMentions: { roles: CONFIG.bot.notifyRoles },
+                })
+            }
+        }))
     }
 
     public async extend(snowflake: string, timestamp: number, timeout = CONFIG.bot.blockTimeout, immediate = false) {
         if (timeout < 0) timeout = 0;
+        if (timeout === 0) this.clearTimeout(snowflake);
         this.usersLastMessage[snowflake] = timestamp + timeout * 1000 * 60;
         const action = () =>
             this.bot.getDatabase().blockedUsers.updateLastMessage(
@@ -66,6 +106,13 @@ export class PingableUserController extends Controller {
         } else {
             this.queueUpdate(snowflake, action);
             return true;
+        }
+    }
+
+    private clearTimeout(snowflake: string) {
+        if (this.notifyTimeouts[snowflake]) {
+            clearTimeout(this.notifyTimeouts[snowflake])
+            delete this.notifyTimeouts[snowflake];
         }
     }
 

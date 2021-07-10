@@ -8,6 +8,9 @@ export default class BotConfig extends Conf {
     public readonly block: string[];
     public readonly blockTimeout: number;
     public readonly excludedChannels: string[];
+    public readonly notifyTimeout: number;
+    public readonly notifyRoles: string[];
+    public readonly notifyChannels: string[];
 
     constructor() {
         super('bot');
@@ -17,5 +20,8 @@ export default class BotConfig extends Conf {
         this.block = []
         this.excludedChannels = [];
         this.blockTimeout = 10;
+        this.notifyTimeout = 10;
+        this.notifyRoles = [];
+        this.notifyChannels = [];
     }
 }
