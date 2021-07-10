@@ -3,6 +3,7 @@ import * as fs from "fs";
 import Conf from "./conf";
 import validate from "./validate";
 import BotConfig from "./bot";
+import DatabaseConfig from "./database";
 
 export default class Config extends Conf {
 
@@ -12,6 +13,7 @@ export default class Config extends Conf {
     public readonly logs: string;
 
     public readonly bot: BotConfig;
+    public readonly database: DatabaseConfig;
 
     constructor() {
         super('config');
@@ -20,6 +22,7 @@ export default class Config extends Conf {
         this.logs = './logs';
 
         this.bot = new BotConfig();
+        this.database = new DatabaseConfig();
     }
 
     public static getConfig(): Config {
@@ -30,6 +33,7 @@ export default class Config extends Conf {
 
         validate<Config>(new Config(), casted);
         validate<BotConfig>(new BotConfig(), casted.bot);
+        validate<DatabaseConfig>(new DatabaseConfig(), casted.database);
 
         return casted;
     }
