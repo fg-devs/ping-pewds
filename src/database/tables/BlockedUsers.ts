@@ -93,6 +93,29 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
         return new Date('01/01/1970');
     }
 
+    public async getById(ids: number | number[]): Promise<Array<Parsed.BlockedUser | null>>
+    public async getById(connection: PoolClient, ids: number | number[]): Promise<Array<Parsed.BlockedUser | null>>
+    public async getById(connection: PoolClient | number | number[] | undefined, ids?: number | number[]): Promise<Array<Parsed.BlockedUser | null>> {
+        if ((connection instanceof Array) || typeof connection === 'number') {
+            ids = connection;
+            connection = undefined;
+        }
+        if (typeof ids === 'undefined') throw new InsertError('No ids entered to initialize.');
+        if (typeof ids === 'number') ids = [ids];
+        const params = ids.map((noop, idx) => `$${idx+1}`).join(',');
+
+        const response = await this.query<Results.DBBlockedUser>(
+            connection as PoolClient | undefined,
+            `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.id} IN (${params});`,
+            ids,
+        ).catch((err) => new SelectError(err));
+
+        if (response instanceof Error) throw response;
+
+        return response.rows.map(this.parse);
+    }
+
+
     protected async init(connection?: PoolClient): Promise<ValidationState> {
         try {
             if (typeof connection === 'undefined') connection = await this.acquire();
@@ -121,6 +144,16 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
             logger.error(e);
             return ValidationState.INVALID;
         }
+    }
+
+    protected parse(data?: Results.DBBlockedUser): Parsed.BlockedUser | null {
+        if (data) {
+            return {
+                id: data.user_id,
+                lastPing: data.user_last_ping,
+            }
+        }
+        return null;
     }
 
 }

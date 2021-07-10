@@ -124,7 +124,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
         }
     }
 
-    protected parse(data: Row): Parsed {
+    protected parse(data?: Row): Parsed | null {
         throw new DatabaseError(`Row parse for ${this.full} has not been implemented.`);
     }
 

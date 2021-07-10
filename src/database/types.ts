@@ -17,7 +17,7 @@ export namespace Results {
 export namespace Parsed {
     export type BlockedUser = {
         id: number;
-        lastPing: Date;
+        lastPing: number;
     }
 }
 

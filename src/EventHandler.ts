@@ -1,4 +1,4 @@
-import { Message, PartialMessage } from "discord.js";
+import {Message, User} from "discord.js";
 import Bot from "./Bot";
 
 export default class EventHandler {
@@ -15,30 +15,14 @@ export default class EventHandler {
 
     async onMessage(message: Message) {
         const log = EventHandler.getLogger();
-        const pingController = this.bot.getPingController();
-        if (pingController.handleMessage(message))
+        const pingableController = this.bot.getPingableUserController();
+        if (await pingableController.handleMessage(message))
             return;
 
-        const flaggedMentions = pingController.getFlaggedMentions(message);
-        if (flaggedMentions.length > 0) {
-            let canPing = true
-            for (const mentionId of flaggedMentions) {
-                if (!pingController.canPing(mentionId)) {
-                    canPing = false
-                    const flaggedMention = message.mentions.users.get(mentionId);
-                    if (flaggedMention) {
-                        log.info(`A mention of '${flaggedMention.username}' was caught and  is pending deletion.`);
-                    }
-                }
-            }
+        const pingController = this.bot.getPingController();
+        if (await pingController.handleMessage(message))
+            return;
 
-            if (!canPing) {
-                await message.delete({
-                    reason: `Pinging this user is not allowed.`,
-                });
-                log.info('message was deleted.');
-            }
-        }
     }
 
     private static getLogger() {

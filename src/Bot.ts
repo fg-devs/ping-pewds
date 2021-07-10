@@ -4,6 +4,8 @@ import {CONFIG} from "./globals";
 import {Logger} from "./utils/logger";
 import IssueHandler from "./IssueHandler";
 import EventHandler from "./EventHandler";
+import {PingableUserController} from "./controllers/PingableUserController";
+import DatabaseManager from "./database/database";
 import {PingController} from "./controllers/PingController";
 
 export default class Bot extends CommandoClient {
@@ -11,7 +13,10 @@ export default class Bot extends CommandoClient {
 
     private readonly events: EventHandler;
 
+    private readonly pingableUserController: PingableUserController;
     private readonly pingController: PingController;
+
+    private readonly database: DatabaseManager;
 
     constructor() {
         super({
@@ -19,6 +24,17 @@ export default class Bot extends CommandoClient {
             owner: CONFIG.bot.owners,
         });
 
+        this.database = new DatabaseManager({
+            host: CONFIG.database.host,
+            port: CONFIG.database.port,
+            user: CONFIG.database.user,
+            database: CONFIG.database.database,
+            schema: CONFIG.database.schema,
+            password: CONFIG.database.pass,
+            max: CONFIG.database.connections,
+        })
+
+        this.pingableUserController = new PingableUserController(this);
         this.pingController = new PingController(this);
 
         this.events = new EventHandler(this);
@@ -44,11 +60,21 @@ export default class Bot extends CommandoClient {
     }
 
     public async start() {
+        await this.database.init();
+        await this.pingableUserController.init();
         await this.login(CONFIG.bot.token)
+    }
+
+    public getPingableUserController() {
+        return this.pingableUserController;
     }
 
     public getPingController() {
         return this.pingController;
+    }
+
+    public getDatabase() {
+        return this.database;
     }
 
     public static getBot() {
