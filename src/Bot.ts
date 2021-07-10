@@ -7,6 +7,8 @@ import EventHandler from "./EventHandler";
 import {PingableUserController} from "./controllers/PingableUserController";
 import DatabaseManager from "./database/database";
 import {PingController} from "./controllers/PingController";
+import ExtendTimeout from "./commands/pingable/extendtimeout";
+import ClearTimeout from "./commands/pingable/cleartimeout";
 
 export default class Bot extends CommandoClient {
     private static bot: Bot;
@@ -53,10 +55,15 @@ export default class Bot extends CommandoClient {
                 prefix: false,
                 ping: false,
             })
-            // .registerGroups([
-            //     ['admin']
-            // ])
+            .registerGroups([
+                ['pingable', 'Commands for Pingable users']
+            ])
             // .registerCommandsIn(path.join(__dirname, './commands'))
+
+        this.registry.registerCommands([
+            ExtendTimeout,
+            ClearTimeout,
+        ])
     }
 
     public async start() {

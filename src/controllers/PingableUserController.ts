@@ -1,8 +1,12 @@
 import Controller from "./controller";
 import Bot from "../Bot";
 import {CONFIG} from "../globals";
-import {Message} from "discord.js";
+import {Message as DiscordMessage} from "discord.js";
 import Timeout = NodeJS.Timeout;
+
+type Message = DiscordMessage & {
+    command?: never | null;
+}
 
 export class PingableUserController extends Controller {
 
@@ -33,10 +37,10 @@ export class PingableUserController extends Controller {
 
     public async handleMessage(message: Message) {
         const log = this.getLogger();
-        if (CONFIG.bot.block.indexOf(message.author.id) >= 0) {
+        if (CONFIG.bot.block.indexOf(message.author.id) >= 0 && message.command === null) {
 
             const now = Date.now();
-            this.flaggedUserTalked(message.author.id, now);
+            await this.extend(message.author.id, now);
             log.debug(`message sent by '${message.author.username}' at ${now}... Waiting until ${this.getTimeoutAfter(now)}`)
 
             return true;
@@ -48,14 +52,28 @@ export class PingableUserController extends Controller {
         return timestamp + CONFIG.bot.blockTimeout * 1000 * 60
     }
 
-    private flaggedUserTalked(snowflake: string, timestamp: number, timeout = CONFIG.bot.blockTimeout) {
+    public async extend(snowflake: string, timestamp: number, timeout = CONFIG.bot.blockTimeout, immediate = false) {
+        if (timeout < 0) timeout = 0;
         this.usersLastMessage[snowflake] = timestamp + timeout * 1000 * 60;
-        this.queueUpdate(snowflake, () =>
+        const action = () =>
             this.bot.getDatabase().blockedUsers.updateLastPing(
                 Number.parseInt(snowflake),
                 timestamp + timeout * 1000 * 60
-            )
-        );
+            ).catch((err) => console.error(err))
+        if (immediate) {
+            this.clearQueue(snowflake);
+            return await action();
+        } else {
+            this.queueUpdate(snowflake, action);
+            return true;
+        }
+    }
+
+    private clearQueue(snowflake: string) {
+        if (this.updateQueue[snowflake]) {
+            clearTimeout(this.updateQueue[snowflake]);
+            delete this.updateQueue[snowflake];
+        }
     }
 
     private queueUpdate(snowflake: string, cb: Function) {
@@ -64,8 +82,12 @@ export class PingableUserController extends Controller {
 
         this.updateQueue[snowflake] = setTimeout(() => {
             cb();
-            delete this.updateQueue[snowflake]
+            delete this.updateQueue[snowflake];
         }, 5000);
+    }
+
+    public getCache() {
+        return { ...this.usersLastMessage };
     }
 
 }

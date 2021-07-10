@@ -6,14 +6,15 @@ import Timeout = NodeJS.Timeout;
 
 export class PingController extends Controller {
 
-    private usersLastMessage: { [s: string]: number } = {};
-
     constructor(bot: Bot) {
         super(bot, 'PingController')
     }
 
     public async handleMessage(message: Message) {
         const log = this.getLogger();
+        if (message.author.bot)
+            return false;
+
         const flaggedMentions = this.getFlaggedMentions(message);
         if (flaggedMentions.length > 0) {
             const pingedUsers: string[] = [];
@@ -52,7 +53,11 @@ export class PingController extends Controller {
 
     canPing(snowflake: string) {
         const now = Date.now();
-        return (this.usersLastMessage[snowflake] || 0) >= now;
+        const cached = this.bot.getPingableUserController().getCache()[snowflake];
+        if (typeof cached === 'number') {
+            return cached >= now;
+        }
+        return false;
     }
 
 }
