@@ -12,7 +12,8 @@ export class PingController extends Controller {
 
     public async handleMessage(message: Message) {
         const log = this.getLogger();
-        if (message.author.bot)
+        if (message.author.bot
+            || CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0)
             return false;
 
         const flaggedMentions = this.getFlaggedMentions(message);

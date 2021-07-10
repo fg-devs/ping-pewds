@@ -7,6 +7,7 @@ export default class BotConfig extends Conf {
     public readonly owners: string[];
     public readonly block: string[];
     public readonly blockTimeout: number;
+    public readonly excludedChannels: string[];
 
     constructor() {
         super('bot');
@@ -14,6 +15,7 @@ export default class BotConfig extends Conf {
         this.prefix = '!';
         this.owners = ['id1', 'id2'];
         this.block = []
+        this.excludedChannels = [];
         this.blockTimeout = 10;
     }
 }
