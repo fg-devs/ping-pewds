@@ -10,14 +10,14 @@ export enum ValidationState {
 export namespace Results {
     export type DBBlockedUser = {
         user_id: number;
-        user_last_ping: number;
+        user_last_message: number;
     }
 }
 
 export namespace Parsed {
     export type BlockedUser = {
         id: number;
-        lastPing: number;
+        lastMessage: number;
     }
 }
 

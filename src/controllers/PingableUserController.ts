@@ -30,7 +30,7 @@ export class PingableUserController extends Controller {
 
         const users = await db.blockedUsers.getById(ids);
         users.forEach((user) => user
-            ? (this.usersLastMessage[`${user.id}`] = user.lastPing)
+            ? (this.usersLastMessage[`${user.id}`] = user.lastMessage)
             : undefined
         )
     }
@@ -56,7 +56,7 @@ export class PingableUserController extends Controller {
         if (timeout < 0) timeout = 0;
         this.usersLastMessage[snowflake] = timestamp + timeout * 1000 * 60;
         const action = () =>
-            this.bot.getDatabase().blockedUsers.updateLastPing(
+            this.bot.getDatabase().blockedUsers.updateLastMessage(
                 Number.parseInt(snowflake),
                 timestamp + timeout * 1000 * 60
             ).catch((err) => console.error(err))

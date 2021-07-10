@@ -18,12 +18,12 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
 
     constructor(manager: DatabaseManager) {
         super(manager, 'blocked_users');
-        this.nullables = ['lastPing'];
-        this.accepted = ['id', 'lastPing'];
+        this.nullables = ['lastMessage'];
+        this.accepted = ['id', 'lastMessage'];
 
         this.mappedKeys = {
             id: 'user_id',
-            lastPing: 'user_last_ping'
+            lastMessage: 'user_last_message',
         }
     }
 
@@ -49,9 +49,9 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
         return response.rowCount > 0;
     }
 
-    public async updateLastPing(id: number, timestamp: number): Promise<boolean>
-    public async updateLastPing(connection: PoolClient, id: number, timestamp: number): Promise<boolean>
-    public async updateLastPing(connection: PoolClient | number | undefined, id: number, timestamp?: number): Promise<boolean> {
+    public async updateLastMessage(id: number, timestamp: number): Promise<boolean>
+    public async updateLastMessage(connection: PoolClient, id: number, timestamp: number): Promise<boolean>
+    public async updateLastMessage(connection: PoolClient | number | undefined, id: number, timestamp?: number): Promise<boolean> {
         if (typeof connection === 'number') {
             timestamp = id;
             id = connection;
@@ -60,7 +60,7 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
 
         const response = await this.query(
             connection as PoolClient | undefined,
-            `UPDATE ${this.full} SET ${this.mappedKeys.lastPing} = $2 WHERE ${this.mappedKeys.id} = $1;`,
+            `UPDATE ${this.full} SET ${this.mappedKeys.lastMessage} = $2 WHERE ${this.mappedKeys.id} = $1;`,
             [id, timestamp as number]
         ).catch((err) => new UpdateError(err));
 
@@ -69,9 +69,9 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
         return response.rowCount === 1;
     }
 
-    public async getLastPing(id: number): Promise<Date>
-    public async getLastPing(connection: PoolClient, id: number): Promise<Date>
-    public async getLastPing(connection: PoolClient | number | undefined, id?: number): Promise<Date> {
+    public async getLastMessage(id: number): Promise<Date>
+    public async getLastMessage(connection: PoolClient, id: number): Promise<Date>
+    public async getLastMessage(connection: PoolClient | number | undefined, id?: number): Promise<Date> {
         if (typeof connection === 'number') {
             id = connection;
             connection = undefined;
@@ -79,7 +79,7 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
 
         const response = await this.query<Results.DBBlockedUser>(
             connection as PoolClient | undefined,
-            `SELECT ${this.mappedKeys.lastPing} FROM ${this.full} WHERE ${this.mappedKeys.id} = $1`,
+            `SELECT ${this.mappedKeys.lastMessage} FROM ${this.full} WHERE ${this.mappedKeys.id} = $1`,
             [id as number]
         ).catch((err) => new SelectError(err));
 
@@ -87,7 +87,7 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
 
         if (response.rows.length === 1) {
             const date = new Date();
-            date.setTime(response.rows[0].user_last_ping);
+            date.setTime(response.rows[0].user_last_message);
             return date;
         }
         return new Date('01/01/1970');
@@ -124,7 +124,7 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
                 connection,
                 `CREATE TABLE ${this.full} (
                     ${this.mappedKeys.id}         BIGINT NOT NULL,
-                    ${this.mappedKeys.lastPing}   BIGINT
+                    ${this.mappedKeys.lastMessage}   BIGINT
                  );`
             )
 
@@ -150,7 +150,7 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
         if (data) {
             return {
                 id: data.user_id,
-                lastPing: Number.parseInt(`${data.user_last_ping}`),
+                lastMessage: Number.parseInt(`${data.user_last_message}`),
             }
         }
         return null;
