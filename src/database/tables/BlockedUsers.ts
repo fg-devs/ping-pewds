@@ -150,7 +150,7 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
         if (data) {
             return {
                 id: data.user_id,
-                lastPing: data.user_last_ping,
+                lastPing: Number.parseInt(`${data.user_last_ping}`),
             }
         }
         return null;
