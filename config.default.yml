@@ -7,3 +7,11 @@ bot:
   blockTimeout: 10 # delay in minutes to stop blocking pings if a specific user has spoken
   block: ['id to block pings for', 'id to block pings for 2']
   excludedChannels: [] # Channel IDs that should be ignored by the bot
+database:
+  host: 'localhost'
+  port: 5432
+  user: 'username'
+  pass: 'password'
+  schema: 'ping_pewds'
+  database: 'floorgang'
+  connections: 10
