@@ -1,5 +1,6 @@
 import { Command, CommandoMessage } from 'discord.js-commando';
 import Bot from '../Bot';
+import getLogger from "./logger";
 
 export default class LogUtil {
     /**
@@ -50,6 +51,6 @@ export default class LogUtil {
     }
 
     private static getCmdLogger(c: Command) {
-        return Bot.getLogger(`command::${c.name}`);
+        return getLogger(`command::${c.name}`);
     }
 }

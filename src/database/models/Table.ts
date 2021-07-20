@@ -2,9 +2,9 @@ import DatabaseManager from "../database";
 import {DatabaseError} from "../errors";
 import {PoolClient, QueryResult} from "pg";
 import {DBParsed, DBTable, ValidationState} from "../types";
-import {Logger} from "../../utils/logger";
+import getLogger from "../../utils/logger";
 
-const logger = Logger.getLogger('database:table');
+const logger = getLogger('database:table');
 
 export type ValueObject = Array<string|number|boolean>;
 
@@ -109,7 +109,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
                     break;
                 case ValidationState.HAS_ADDITIONAL_INIT:
                     this.state = await this.init(connection);
-                    logger.log(`${this.full} required additional initialization.`);
+                    logger.verbose(`${this.full} required additional initialization.`);
                     await this.validate(connection);
                     break;
                 case ValidationState.INVALID:
@@ -117,7 +117,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
             }
         } else {
             this.state = await this.init(connection);
-            logger.log(`${this.name} table created.`);
+            logger.verbose(`${this.name} table created.`);
             if (this.state >= ValidationState.NEEDS_MIGRATION) {
                 await this.validate(connection);
             }

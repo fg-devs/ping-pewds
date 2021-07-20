@@ -1,5 +1,6 @@
 import {Message, User} from "discord.js";
 import Bot from "./Bot";
+import getLogger from "./utils/logger";
 
 export default class EventHandler {
     private readonly bot: Bot;
@@ -26,6 +27,6 @@ export default class EventHandler {
     }
 
     private static getLogger() {
-        return Bot.getLogger('events');
+        return getLogger('events');
     }
 }

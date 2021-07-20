@@ -5,7 +5,8 @@
  * @property {Bot} bot bot to get a logger instance
  */
 import Bot from "../Bot";
-import { Logger } from "../utils/logger";
+import getLogger  from "../utils/logger";
+import winston from "winston";
 
 export default class Controller {
     private readonly name: string;
@@ -21,7 +22,7 @@ export default class Controller {
      * Used by children of Controller to log certain details that may occur
      * @returns {Logger}
      */
-    protected getLogger(): Logger {
-        return Bot.getLogger(`(controller) ${this.name}`);
+    protected getLogger(): winston.Logger {
+        return getLogger(`(controller) ${this.name}`);
     }
 }

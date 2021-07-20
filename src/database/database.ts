@@ -1,8 +1,8 @@
 import {Pool, PoolConfig, DatabaseError} from "pg";
 import Table from "./models/Table";
-import {Logger} from "../utils/logger";
+import getLogger from "../utils/logger";
 import BlockedUsersTable from "./tables/BlockedUsers";
-const logger = Logger.getLogger('database:manager')
+const logger = getLogger('database:manager')
 
 type CustomizedConfig = PoolConfig & {
     schema: string;

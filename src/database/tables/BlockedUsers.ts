@@ -2,10 +2,10 @@ import Table from "../models/Table";
 import {Parsed, Results, ValidationState} from "../types";
 import {PoolClient} from "pg";
 import DatabaseManager from "../database";
-import {Logger} from "../../utils/logger";
+import getLogger from "../../utils/logger";
 import {InsertError, SelectError, UpdateError} from "../errors";
 
-const logger = Logger.getLogger('database:table:blocked_users');
+const logger = getLogger('database:table:blocked_users');
 
 export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Parsed.BlockedUser> {
 

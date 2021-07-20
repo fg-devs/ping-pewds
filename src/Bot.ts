@@ -1,7 +1,7 @@
 import {CommandoClient, CommandoMessage} from "discord.js-commando";
 import path from "path";
 import {CONFIG} from "./globals";
-import {Logger} from "./utils/logger";
+import getLogger from "./utils/logger";
 import IssueHandler from "./IssueHandler";
 import EventHandler from "./EventHandler";
 import {PingableUserController} from "./controllers/PingableUserController";
@@ -9,6 +9,7 @@ import DatabaseManager from "./database/database";
 import {PingController} from "./controllers/PingController";
 import ExtendTimeout from "./commands/pingable/extendtimeout";
 import ClearTimeout from "./commands/pingable/cleartimeout";
+import winston from "winston";
 
 export default class Bot extends CommandoClient {
     private static bot: Bot;
@@ -91,9 +92,8 @@ export default class Bot extends CommandoClient {
         throw new Error('getBot was called before initialization.');
     }
 
-    public static getLogger(section: string): Logger {
-        const logger = Logger.getLogger(`Bot::${section}`, CONFIG.logLevel);
-        return logger;
+    public static getLogger(section: string): winston.Logger {
+        return getLogger(`Bot::${section}`);
     }
 
     private registerEvents() {

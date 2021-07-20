@@ -1,5 +1,3 @@
-import { CONFIG } from "./globals";
-import { Logger } from "./utils/logger";
 import Bot from "./Bot";
 
 process.setMaxListeners(0)
