@@ -18,10 +18,15 @@ export default class Controller {
         this.bot = bot;
     }
 
+
     /**
-     * Used by children of Controller to log certain details that may occur
-     * @returns {Logger}
+     * Used on *most* promise catch statements to allow the bot to continue running if something fails
      */
+    protected handleError = (err: Error) => {
+        this.getLogger().error(err)
+        return null;
+    }
+
     protected getLogger(): winston.Logger {
         return getLogger(`(controller) ${this.name}`);
     }

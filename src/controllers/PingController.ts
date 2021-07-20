@@ -2,7 +2,6 @@ import Controller from "./controller";
 import Bot from "../Bot";
 import {CONFIG} from "../globals";
 import {Message} from "discord.js";
-import Timeout = NodeJS.Timeout;
 
 export class PingController extends Controller {
 
@@ -10,8 +9,13 @@ export class PingController extends Controller {
         super(bot, 'PingController')
     }
 
+    /**
+     * checks for messages that include pings of users who should not be pinged
+     * if a ping is found, it is removed and a message is sent to the channel
+     * telling the user to not ping this user.
+     * @todo handle punishments
+     */
     public async handleMessage(message: Message) {
-        const log = this.getLogger();
         if (message.author.bot
             || CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0)
             return false;
@@ -25,20 +29,26 @@ export class PingController extends Controller {
                     canPing = false
                     const flaggedMention = message.mentions.users.get(mentionId);
                     if (flaggedMention) {
-                        pingedUsers.push(flaggedMention.username);
-                        log.info(`A mention of '${flaggedMention.username}' was caught and  is pending deletion.`);
+                        pingedUsers.push(`<@${flaggedMention.id}>`);
+                        this.getLogger().info(`A mention of '${flaggedMention.username}' was caught and  is pending deletion.`);
                     }
                 }
             }
 
             if (!canPing) {
-                await message.delete();
-                log.info('message was deleted.');
-                const notification = await message.channel.send({ content: `Please do not ping *${pingedUsers.join(', ')}*.`})
+                await message.delete()
+                    .catch(this.handleError);
+                const notification = await message.channel.send({
+                    content: `Please do not ping ${pingedUsers.join(', ')} unless they are active.`,
+                    allowedMentions: { users: [] },
+                }).catch(this.handleError);
 
-                // TODO handle punishment
+                // TODO handle punishments
 
-                await notification.delete({ timeout: 10000 })
+                if (notification) {
+                    await notification.delete({ timeout: 10000 })
+                        .catch(this.handleError);
+                }
             }
 
             return true;
@@ -46,12 +56,20 @@ export class PingController extends Controller {
         return false;
     }
 
-    getFlaggedMentions(message: Message): string[] {
+    /**
+     * checks to see if the message contains any pings of users that should not be pinged
+     * and returns all the user id that are mentioned that should not be.
+     */
+    private getFlaggedMentions(message: Message): string[] {
         return CONFIG.bot.block.filter((id) =>
             message.mentions.has(id)
         )
     }
 
+    /**
+     * compares the current timestamp with the timestamp of the last message sent by the managed users
+     * @param snowflake the user's snowflake id
+     */
     canPing(snowflake: string) {
         const now = Date.now();
         const cached = this.bot.getPingableUserController().getCache()[snowflake];
