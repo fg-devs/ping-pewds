@@ -38,17 +38,17 @@ describe('Start standard DatabaseManager', async function () {
     })
 
     it('should set last ping for id 1111', async function() {
-        const response = await db.blockedUsers.updateLastPing(1111, new Date().getTime());
+        const response = await db.blockedUsers.updateLastMessage(1111, new Date().getTime());
         assert.isTrue(response);
     })
 
     it('should get an absent last ping', async function() {
-        const response = await db.blockedUsers.getLastPing(2222);
+        const response = await db.blockedUsers.getLastMessage(2222);
         assert.equal(response.getFullYear(), 1969);
     })
 
     it('should get last ping of id 1111', async function() {
-        const response = await db.blockedUsers.getLastPing(1111);
+        const response = await db.blockedUsers.getLastMessage(1111);
         assert.equal(response.getFullYear(), new Date().getFullYear());
     })
 });
