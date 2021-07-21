@@ -2,7 +2,7 @@ import winston, { format } from 'winston';
 const { label, timestamp, combine, prettyPrint } = format;
 type Meta = {
     [s: string]: string | boolean | number | Meta | undefined;
-}
+};
 
 function getLogger(name: string, meta?: Meta) {
     if (winston.loggers.has(name)) {
@@ -17,8 +17,8 @@ function getLogger(name: string, meta?: Meta) {
                     timestamp(),
                     label({ label: name }),
                     prettyPrint({ colorize: true, depth: 5 })
-                )
-            })
+                ),
+            }),
         ],
         defaultMeta: meta,
     });

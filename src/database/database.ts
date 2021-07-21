@@ -1,13 +1,13 @@
-import {Pool, PoolConfig, DatabaseError} from "pg";
-import Table from "./models/Table";
-import getLogger from "../utils/logger";
-import BlockedUsersTable from "./tables/BlockedUsers";
-import Bot from "../Bot";
-import winston from "winston";
+import { Pool, PoolConfig, DatabaseError } from 'pg';
+import Table from './models/Table';
+import getLogger from '../utils/logger';
+import BlockedUsersTable from './tables/BlockedUsers';
+import Bot from '../Bot';
+import winston from 'winston';
 
 type CustomizedConfig = PoolConfig & {
     schema: string;
-}
+};
 
 export default class DatabaseManager {
     public readonly pool: Pool;
@@ -31,7 +31,6 @@ export default class DatabaseManager {
         this.logger = DatabaseManager.getLogger();
     }
 
-
     public acquire() {
         return this.pool.connect();
     }
@@ -41,11 +40,12 @@ export default class DatabaseManager {
 
         const tables = this.getAttachedTables();
 
-        await Promise.all(tables.map((table) => table.drop(connection)))
-            .catch((err: DatabaseError) => {
+        await Promise.all(tables.map((table) => table.drop(connection))).catch(
+            (err: DatabaseError) => {
                 console.log(err);
                 throw err;
-            })
+            }
+        );
     }
 
     // no catch so the bot crashes if initialization fails
@@ -54,9 +54,9 @@ export default class DatabaseManager {
 
         await connection.query(`CREATE SCHEMA IF NOT EXISTS ${this.schema};`);
 
-        await Promise.all(this.getAttachedTables().map((table) =>
-            table.validate(connection)
-        ))
+        await Promise.all(
+            this.getAttachedTables().map((table) => table.validate(connection))
+        );
 
         connection.release();
     }
@@ -71,7 +71,11 @@ export default class DatabaseManager {
 
     private getAttachedTables() {
         return Object.keys(this)
-            .map((key) => (this[key as never] as unknown instanceof Table ? this[key as never] as Table : undefined))
+            .map((key) =>
+                (this[key as never] as unknown) instanceof Table
+                    ? (this[key as never] as Table)
+                    : undefined
+            )
             .filter((table) => typeof table !== 'undefined') as Table[];
     }
 

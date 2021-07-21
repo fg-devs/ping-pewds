@@ -1,11 +1,10 @@
-import DatabaseManager from "../database";
-import {DatabaseError} from "../errors";
-import {PoolClient, QueryResult} from "pg";
-import {DBParsed, DBTable, ValidationState, ValueObject} from "../types";
-import getLogger from "../../utils/logger";
+import DatabaseManager from '../database';
+import { DatabaseError } from '../errors';
+import { PoolClient, QueryResult } from 'pg';
+import { DBParsed, DBTable, ValidationState, ValueObject } from '../types';
+import getLogger from '../../utils/logger';
 
 const logger = getLogger('database:table');
-
 
 export default class Table<Row = DBTable, Parsed = DBParsed> {
     protected readonly manager: DatabaseManager;
@@ -20,12 +19,12 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
 
     protected readonly mappedKeys: {
         [s in keyof Parsed]: keyof Row;
-    }
+    };
 
     constructor(manager: DatabaseManager, name: string) {
         this.manager = manager;
         this.name = name;
-        this.full = `${this.manager.getEscapedSchema()}."${this.name}"`
+        this.full = `${this.manager.getEscapedSchema()}."${this.name}"`;
         this.state = ValidationState.NOT_PROCESSED;
         this.accepted = [];
         this.nullables = [];
@@ -42,13 +41,17 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
      * @param statement
      * @param values
      */
-    private attachedQuery<T = any>(connection: PoolClient, statement: string, values?: ValueObject): Promise<QueryResult<T>> {
+    private attachedQuery<T = any>(
+        connection: PoolClient,
+        statement: string,
+        values?: ValueObject
+    ): Promise<QueryResult<T>> {
         return new Promise((resolve, reject) => {
             connection.query<T>(statement, values || [], (err, results) => {
                 if (err) reject(err);
                 else resolve(results);
-            })
-        })
+            });
+        });
     }
 
     /**
@@ -56,14 +59,18 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
      * @param statement
      * @param values
      */
-    private async internalQuery<T = any>(statement: string, values?: ValueObject): Promise<QueryResult<T>> {
+    private async internalQuery<T = any>(
+        statement: string,
+        values?: ValueObject
+    ): Promise<QueryResult<T>> {
         const connection = await this.acquire();
 
-        const result = await this.attachedQuery(connection, statement, values)
-            .catch((err) => {
+        const result = await this.attachedQuery(connection, statement, values).catch(
+            (err) => {
                 connection.release(err);
                 throw err;
-            })
+            }
+        );
 
         connection.release();
         return result;
@@ -75,9 +82,20 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
      * @param statement the SQL statement to be queried
      * @param values the parameters sent along with the statement
      */
-    public async query<T = any>(statement: string, values?: ValueObject): Promise<QueryResult<T>>
-    public async query<T = any>(connection: PoolClient | undefined, statement: string, values?: ValueObject): Promise<QueryResult<T>>
-    public async query<T = any>(connection: PoolClient | string | undefined, statement?: string | ValueObject, values?: ValueObject): Promise<QueryResult<T>> {
+    public async query<T = any>(
+        statement: string,
+        values?: ValueObject
+    ): Promise<QueryResult<T>>;
+    public async query<T = any>(
+        connection: PoolClient | undefined,
+        statement: string,
+        values?: ValueObject
+    ): Promise<QueryResult<T>>;
+    public async query<T = any>(
+        connection: PoolClient | string | undefined,
+        statement?: string | ValueObject,
+        values?: ValueObject
+    ): Promise<QueryResult<T>> {
         if (typeof connection === 'object') {
             return this.attachedQuery(connection, statement as string, values);
         }
@@ -87,7 +105,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
         if (typeof statement === 'string') {
             return this.internalQuery(statement, values);
         }
-        console.error({connection, statement, values});
+        console.error({ connection, statement, values });
         throw new DatabaseError('should never happen', 'but it did, so...');
     }
 
@@ -133,7 +151,10 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
                     await this.validate(connection);
                     break;
                 case ValidationState.INVALID:
-                    throw new DatabaseError('Initialization Failed', 'Database could not be validated successfully')
+                    throw new DatabaseError(
+                        'Initialization Failed',
+                        'Database could not be validated successfully'
+                    );
             }
         } else {
             this.state = await this.init(connection);
@@ -149,7 +170,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
     }
 
     protected async migrate(connection?: PoolClient): Promise<ValidationState> {
-        return ValidationState.VALIDATED
+        return ValidationState.VALIDATED;
     }
 
     protected async init(connection?: PoolClient): Promise<ValidationState> {

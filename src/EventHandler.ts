@@ -1,5 +1,5 @@
-import {Message} from "discord.js";
-import Bot from "./Bot";
+import { Message } from 'discord.js';
+import Bot from './Bot';
 
 export default class EventHandler {
     private readonly bot: Bot;
@@ -14,13 +14,10 @@ export default class EventHandler {
 
     async onMessage(message: Message) {
         const pingableController = this.bot.getPingableUserController();
-        if (await pingableController.handleMessage(message))
-            return;
+        if (await pingableController.handleMessage(message)) return;
 
         const pingController = this.bot.getPingController();
-        if (await pingController.handleMessage(message))
-            return;
-
+        if (await pingController.handleMessage(message)) return;
     }
 
     private static getLogger() {

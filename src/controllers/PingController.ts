@@ -1,12 +1,11 @@
-import Controller from "./controller";
-import Bot from "../Bot";
-import {CONFIG} from "../globals";
-import {Message} from "discord.js";
+import Controller from './controller';
+import Bot from '../Bot';
+import { CONFIG } from '../globals';
+import { Message } from 'discord.js';
 
 export class PingController extends Controller {
-
     constructor(bot: Bot) {
-        super(bot, 'PingController')
+        super(bot, 'PingController');
     }
 
     /**
@@ -16,38 +15,44 @@ export class PingController extends Controller {
      * @todo handle punishments
      */
     public async handleMessage(message: Message) {
-        if (message.author.bot
-            || CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0)
+        if (
+            message.author.bot ||
+            CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0
+        )
             return false;
 
         const flaggedMentions = this.getFlaggedMentions(message);
         if (flaggedMentions.length > 0) {
             const pingedUsers: string[] = [];
-            let canPing = true
+            let canPing = true;
             for (const mentionId of flaggedMentions) {
                 if (!this.canPing(mentionId)) {
-                    canPing = false
+                    canPing = false;
                     const flaggedMention = message.mentions.users.get(mentionId);
                     if (flaggedMention) {
                         pingedUsers.push(`<@${flaggedMention.id}>`);
-                        this.getLogger().info(`A mention of '${flaggedMention.username}' was caught and  is pending deletion.`);
+                        this.getLogger().info(
+                            `A mention of '${flaggedMention.username}' was caught and  is pending deletion.`
+                        );
                     }
                 }
             }
 
             if (!canPing) {
-                await message.delete()
+                await message.delete().catch(this.handleError);
+                const notification = await message.channel
+                    .send({
+                        content: `Please do not ping ${pingedUsers.join(
+                            ', '
+                        )} unless they are active.`,
+                        allowedMentions: { users: [] },
+                    })
                     .catch(this.handleError);
-                const notification = await message.channel.send({
-                    content: `Please do not ping ${pingedUsers.join(', ')} unless they are active.`,
-                    allowedMentions: { users: [] },
-                }).catch(this.handleError);
 
                 // TODO handle punishments
 
                 if (notification) {
-                    await notification.delete({ timeout: 10000 })
-                        .catch(this.handleError);
+                    await notification.delete({ timeout: 10000 }).catch(this.handleError);
                 }
             }
 
@@ -61,9 +66,7 @@ export class PingController extends Controller {
      * and returns all the user id that are mentioned that should not be.
      */
     private getFlaggedMentions(message: Message): string[] {
-        return CONFIG.bot.block.filter((id) =>
-            message.mentions.has(id)
-        )
+        return CONFIG.bot.block.filter((id) => message.mentions.has(id));
     }
 
     /**
@@ -78,5 +81,4 @@ export class PingController extends Controller {
         }
         return false;
     }
-
 }

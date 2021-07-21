@@ -1,17 +1,16 @@
-import {CommandoClient, CommandoMessage} from "discord.js-commando";
-import {CONFIG} from "./globals";
-import getLogger from "./utils/logger";
-import IssueHandler from "./IssueHandler";
-import EventHandler from "./EventHandler";
-import {PingableUserController} from "./controllers/PingableUserController";
-import DatabaseManager from "./database/database";
-import {PingController} from "./controllers/PingController";
-import ExtendTimeout from "./commands/pingable/extendtimeout";
-import ClearTimeout from "./commands/pingable/cleartimeout";
-import winston from "winston";
+import { CommandoClient, CommandoMessage } from 'discord.js-commando';
+import { CONFIG } from './globals';
+import getLogger from './utils/logger';
+import IssueHandler from './IssueHandler';
+import EventHandler from './EventHandler';
+import { PingableUserController } from './controllers/PingableUserController';
+import DatabaseManager from './database/database';
+import { PingController } from './controllers/PingController';
+import ExtendTimeout from './commands/pingable/extendtimeout';
+import ClearTimeout from './commands/pingable/cleartimeout';
+import winston from 'winston';
 
 export default class Bot extends CommandoClient {
-
     private readonly events: EventHandler;
 
     private readonly pingableUserController: PingableUserController;
@@ -34,7 +33,7 @@ export default class Bot extends CommandoClient {
             schema: CONFIG.database.schema,
             password: CONFIG.database.pass,
             max: CONFIG.database.connections,
-        })
+        });
 
         this.pingableUserController = new PingableUserController(this);
         this.pingController = new PingController(this);
@@ -55,24 +54,19 @@ export default class Bot extends CommandoClient {
                 prefix: false,
                 ping: false,
             })
-            .registerGroups([
-                ['pingable', 'Commands for Pingable users']
-            ])
-            // .registerCommandsIn(path.join(__dirname, './commands'))
+            .registerGroups([['pingable', 'Commands for Pingable users']]);
+        // .registerCommandsIn(path.join(__dirname, './commands'))
 
         // TODO replace this with .registerCommandsIn()
         //      for some reason I can't get the commands to load from there
         //      so I am forced to register them manually
-        this.registry.registerCommands([
-            ExtendTimeout,
-            ClearTimeout,
-        ])
+        this.registry.registerCommands([ExtendTimeout, ClearTimeout]);
     }
 
     public async start() {
         await this.database.init();
         await this.pingableUserController.init();
-        await this.login(CONFIG.bot.token)
+        await this.login(CONFIG.bot.token);
     }
 
     public getPingableUserController() {
@@ -97,16 +91,13 @@ export default class Bot extends CommandoClient {
             .on('commandRun', issues.onCommandRun.bind(issues))
             .on('commandRegister', issues.onCommandRegister.bind(issues));
 
-
         this.on('message', this.events.onMessage.bind(this.events));
 
         this.once('ready', this.events.onReady.bind(this.events));
-
     }
 
     private inhibitor(msg: CommandoMessage): false | string {
-        const passes = msg.content.startsWith(this.commandPrefix)
-            && msg.guild !== null;
+        const passes = msg.content.startsWith(this.commandPrefix) && msg.guild !== null;
 
         return passes ? false : '';
     }

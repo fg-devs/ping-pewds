@@ -1,6 +1,6 @@
-import {Command, CommandoMessage} from "discord.js-commando";
-import Bot from "../../Bot";
-import {CONFIG} from "../../globals";
+import { Command, CommandoMessage } from 'discord.js-commando';
+import Bot from '../../Bot';
+import { CONFIG } from '../../globals';
 
 export default class ClearTimeout extends Command {
     constructor(client: Bot) {
@@ -11,8 +11,7 @@ export default class ClearTimeout extends Command {
             description: 'Immediately stop all pings.',
             group: 'pingable',
             memberName: 'clear',
-        })
-
+        });
     }
 
     hasPermission(message: CommandoMessage, ownerOverride?: boolean): boolean | string {
@@ -23,18 +22,18 @@ export default class ClearTimeout extends Command {
         const author = msg.author.id;
         const client = this.client as Bot;
 
-        const extended = await client.getPingableUserController()
+        const extended = await client
+            .getPingableUserController()
             .extend(author, Date.now(), -1, true);
 
         if (extended) {
             await msg.delete();
             const notification = await msg.channel.send({
-                content: `<@${author}>, you'll no longer be able to be pinged.`
-            })
+                content: `<@${author}>, you'll no longer be able to be pinged.`,
+            });
             await notification.delete({ timeout: 5000 });
         }
 
         return null;
     }
-
 }

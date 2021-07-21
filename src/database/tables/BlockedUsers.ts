@@ -1,17 +1,19 @@
-import Table from "../models/Table";
-import {Parsed, Results, ValidationState} from "../types";
-import {PoolClient} from "pg";
-import DatabaseManager from "../database";
-import {InsertError, SelectError, UpdateError} from "../errors";
+import Table from '../models/Table';
+import { Parsed, Results, ValidationState } from '../types';
+import { PoolClient } from 'pg';
+import DatabaseManager from '../database';
+import { InsertError, SelectError, UpdateError } from '../errors';
 
-export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Parsed.BlockedUser> {
-
+export default class BlockedUsersTable extends Table<
+    Results.DBBlockedUser,
+    Parsed.BlockedUser
+> {
     protected readonly accepted: Array<keyof Parsed.BlockedUser>;
     protected readonly nullables: Array<keyof Parsed.BlockedUser>;
 
     protected readonly mappedKeys: {
         [s in keyof Parsed.BlockedUser]: keyof Results.DBBlockedUser;
-    }
+    };
 
     constructor(manager: DatabaseManager) {
         super(manager, 'blocked_users');
@@ -21,19 +23,26 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
         this.mappedKeys = {
             id: 'user_id',
             lastMessage: 'user_last_message',
-        }
+        };
     }
 
-    public async initializeUsers(ids: number | number[]): Promise<boolean>
-    public async initializeUsers(connection: PoolClient, ids: number | number[]): Promise<boolean>
-    public async initializeUsers(connection?: PoolClient | number | number[], ids?: number | number[]): Promise<boolean> {
-        if ((connection instanceof Array) || typeof connection === 'number') {
+    public async initializeUsers(ids: number | number[]): Promise<boolean>;
+    public async initializeUsers(
+        connection: PoolClient,
+        ids: number | number[]
+    ): Promise<boolean>;
+    public async initializeUsers(
+        connection?: PoolClient | number | number[],
+        ids?: number | number[]
+    ): Promise<boolean> {
+        if (connection instanceof Array || typeof connection === 'number') {
             ids = connection;
             connection = undefined;
         }
-        if (typeof ids === 'undefined') throw new InsertError('No ids entered to initialize.');
+        if (typeof ids === 'undefined')
+            throw new InsertError('No ids entered to initialize.');
         if (typeof ids === 'number') ids = [ids];
-        const params = ids.map((noop, idx) => `($${idx+1})`).join(',');
+        const params = ids.map((noop, idx) => `($${idx + 1})`).join(',');
 
         const response = await this.query(
             connection as PoolClient | undefined,
@@ -46,9 +55,17 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
         return response.rowCount > 0;
     }
 
-    public async updateLastMessage(id: number, timestamp: number): Promise<boolean>
-    public async updateLastMessage(connection: PoolClient, id: number, timestamp: number): Promise<boolean>
-    public async updateLastMessage(connection: PoolClient | number | undefined, id: number, timestamp?: number): Promise<boolean> {
+    public async updateLastMessage(id: number, timestamp: number): Promise<boolean>;
+    public async updateLastMessage(
+        connection: PoolClient,
+        id: number,
+        timestamp: number
+    ): Promise<boolean>;
+    public async updateLastMessage(
+        connection: PoolClient | number | undefined,
+        id: number,
+        timestamp?: number
+    ): Promise<boolean> {
         if (typeof connection === 'number') {
             timestamp = id;
             id = connection;
@@ -66,9 +83,12 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
         return response.rowCount === 1;
     }
 
-    public async getLastMessage(id: number): Promise<Date>
-    public async getLastMessage(connection: PoolClient, id: number): Promise<Date>
-    public async getLastMessage(connection: PoolClient | number | undefined, id?: number): Promise<Date> {
+    public async getLastMessage(id: number): Promise<Date>;
+    public async getLastMessage(connection: PoolClient, id: number): Promise<Date>;
+    public async getLastMessage(
+        connection: PoolClient | number | undefined,
+        id?: number
+    ): Promise<Date> {
         if (typeof connection === 'number') {
             id = connection;
             connection = undefined;
@@ -90,21 +110,30 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
         return new Date('01/01/1970');
     }
 
-    public async getById(ids: number | number[]): Promise<Array<Parsed.BlockedUser | null>>
-    public async getById(connection: PoolClient, ids: number | number[]): Promise<Array<Parsed.BlockedUser | null>>
-    public async getById(connection: PoolClient | number | number[] | undefined, ids?: number | number[]): Promise<Array<Parsed.BlockedUser | null>> {
-        if ((connection instanceof Array) || typeof connection === 'number') {
+    public async getById(
+        ids: number | number[]
+    ): Promise<Array<Parsed.BlockedUser | null>>;
+    public async getById(
+        connection: PoolClient,
+        ids: number | number[]
+    ): Promise<Array<Parsed.BlockedUser | null>>;
+    public async getById(
+        connection: PoolClient | number | number[] | undefined,
+        ids?: number | number[]
+    ): Promise<Array<Parsed.BlockedUser | null>> {
+        if (connection instanceof Array || typeof connection === 'number') {
             ids = connection;
             connection = undefined;
         }
-        if (typeof ids === 'undefined') throw new InsertError('No ids entered to initialize.');
+        if (typeof ids === 'undefined')
+            throw new InsertError('No ids entered to initialize.');
         if (typeof ids === 'number') ids = [ids];
-        const params = ids.map((noop, idx) => `$${idx+1}`).join(',');
+        const params = ids.map((noop, idx) => `$${idx + 1}`).join(',');
 
         const response = await this.query<Results.DBBlockedUser>(
             connection as PoolClient | undefined,
             `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.id} IN (${params});`,
-            ids,
+            ids
         ).catch((err) => new SelectError(err));
 
         if (response instanceof Error) throw response;
@@ -122,18 +151,17 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
                     ${this.mappedKeys.id}         BIGINT NOT NULL,
                     ${this.mappedKeys.lastMessage}   BIGINT
                  );`
-            )
+            );
 
             await this.query(
                 connection,
                 `CREATE UNIQUE INDEX ${this.name}_uindex ON ${this.full} (${this.mappedKeys.id});`
-            )
+            );
 
             await this.query(
                 connection,
                 `ALTER TABLE ${this.full} ADD CONSTRAINT ${this.name}_pk PRIMARY KEY (${this.mappedKeys.id});`
-            )
-
+            );
 
             return ValidationState.VALIDATED;
         } catch (e) {
@@ -147,9 +175,8 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
             return {
                 id: data.user_id,
                 lastMessage: Number.parseInt(`${data.user_last_message}`),
-            }
+            };
         }
         return null;
     }
-
 }

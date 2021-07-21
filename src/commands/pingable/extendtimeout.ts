@@ -1,10 +1,10 @@
-import {Command, CommandoMessage} from "discord.js-commando";
-import Bot from "../../Bot";
-import {CONFIG} from "../../globals";
+import { Command, CommandoMessage } from 'discord.js-commando';
+import Bot from '../../Bot';
+import { CONFIG } from '../../globals';
 
 type Args = {
     timeout: number;
-}
+};
 
 export default class ExtendTimeout extends Command {
     constructor(client: Bot) {
@@ -26,10 +26,9 @@ export default class ExtendTimeout extends Command {
                     parse: (val: string) => Number.parseInt(val),
                     wait: 10,
                     error: 'Please enter a numeric value representing the number of minutes to extend.',
-                }
-            ]
-        })
-
+                },
+            ],
+        });
     }
 
     hasPermission(message: CommandoMessage, ownerOverride?: boolean): boolean | string {
@@ -41,18 +40,18 @@ export default class ExtendTimeout extends Command {
         const author = msg.author.id;
         const client = this.client as Bot;
         const date = new Date();
-        const extended = await client.getPingableUserController()
+        const extended = await client
+            .getPingableUserController()
             .extend(author, date.getTime(), timeout, true);
         date.setTime(date.getTime() + timeout * 1000 * 60);
         if (extended) {
             await msg.delete();
             const notification = await msg.channel.send({
-                content: `<@${author}>, you'll be able to be pinged until ${date.toLocaleTimeString()}.`
-            })
+                content: `<@${author}>, you'll be able to be pinged until ${date.toLocaleTimeString()}.`,
+            });
             await notification.delete({ timeout: 15000 });
         }
 
         return null;
     }
-
 }

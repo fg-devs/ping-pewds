@@ -2,7 +2,6 @@ import { DatabaseError as DBError } from 'pg';
 import DatabaseError from './DatabaseError';
 
 export default class InsertError extends DatabaseError {
-
     constructor(message: string);
 
     constructor(error: DBError);
@@ -17,10 +16,8 @@ export default class InsertError extends DatabaseError {
             message = error.message;
         }
 
-        if (error instanceof Error)
-            super(error, DatabaseError.INSERT_ERROR, message);
-        else
-            super(DatabaseError.INSERT_ERROR, message);
+        if (error instanceof Error) super(error, DatabaseError.INSERT_ERROR, message);
+        else super(DatabaseError.INSERT_ERROR, message);
 
         this.name = DatabaseError.INSERT_ERROR;
     }

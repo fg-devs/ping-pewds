@@ -20,10 +20,8 @@ export default function validate<T extends Conf>(ref: T, obj: any): void {
         if (key === 'name' || key === 'timeouts') {
             continue;
         }
-        if (!(objKeys.includes(key))) {
-            console.log(
-                `${ref.name} is missing ${key} attribute. See (docs/config.md)`,
-            );
+        if (!objKeys.includes(key)) {
+            console.log(`${ref.name} is missing ${key} attribute. See (docs/config.md)`);
             hasMissingAttr = true;
         }
     }

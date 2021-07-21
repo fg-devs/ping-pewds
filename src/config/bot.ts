@@ -1,7 +1,6 @@
-import Conf from "./conf";
+import Conf from './conf';
 
 export default class BotConfig extends Conf {
-
     public readonly token: string;
     public readonly prefix: string;
     public readonly owners: string[];
@@ -17,7 +16,7 @@ export default class BotConfig extends Conf {
         this.token = 'BotToken';
         this.prefix = '!';
         this.owners = ['id1', 'id2'];
-        this.block = []
+        this.block = [];
         this.excludedChannels = [];
         this.blockTimeout = 10;
         this.notifyTimeout = 10;

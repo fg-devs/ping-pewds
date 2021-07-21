@@ -1,7 +1,6 @@
-import Conf from "./conf";
+import Conf from './conf';
 
 export default class DatabaseConfig extends Conf {
-
     public readonly host: string;
     public readonly port: number;
     public readonly user: string;

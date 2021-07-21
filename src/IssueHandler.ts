@@ -1,8 +1,8 @@
 import { Message } from 'discord.js';
 import { Command, CommandoMessage } from 'discord.js-commando';
-import Bot from "./Bot";
+import Bot from './Bot';
 import LogUtil from './utils/LogUtil';
-import winston from "winston";
+import winston from 'winston';
 
 export default class IssueHandler {
     /**
@@ -47,11 +47,11 @@ ${LogUtil.breakDownErr(err)}`;
     public onCommandRun(
         c: Command,
         _p: Promise<Message | Message[] | null>,
-        msg: CommandoMessage,
+        msg: CommandoMessage
     ): void {
         const log = this.getLogger(c);
-        const message = `${msg.author.tag} executed this command\n`
-            + `${LogUtil.breakDownMsg(msg)}`;
+        const message =
+            `${msg.author.tag} executed this command\n` + `${LogUtil.breakDownMsg(msg)}`;
 
         log.debug(message);
     }
