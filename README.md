@@ -36,8 +36,6 @@ npm run pm2
 
 ## Configuration
 
-## General Configuration
-
 ### Bot specific configuration
 |Key|Default|Description|
 |---|---|---|
