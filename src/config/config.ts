@@ -9,17 +9,11 @@ export default class Config extends Conf {
 
     private static CONFIG_LOCATION = process.env.CONFIG || './config.yml'
 
-    public readonly logLevel: string;
-    public readonly logs: string;
-
     public readonly bot: BotConfig;
     public readonly database: DatabaseConfig;
 
     constructor() {
         super('config');
-
-        this.logLevel = 'debug';
-        this.logs = './logs';
 
         this.bot = new BotConfig();
         this.database = new DatabaseConfig();

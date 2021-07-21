@@ -1,5 +1,3 @@
-logLevel: 'DEBUG'
-logs: './logs'
 bot:
   token: 'BotToken'
   prefix: '!'
