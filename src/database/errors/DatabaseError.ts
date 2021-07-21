@@ -4,7 +4,6 @@ export default class DatabaseError extends Error {
     static UPDATE_ERROR = 'Update Error';
     static SELECT_ERROR = 'Select Error';
 
-    readonly error?: Error;
     readonly errorMessage?: string;
 
     constructor(type: string, message?: string);
@@ -19,6 +18,8 @@ export default class DatabaseError extends Error {
             message = error.message;
         }
         super(message);
+
+        // remap the actual error into this error
         if (error instanceof Error) {
             // eslint-disable-next-line
             for (const key in error) {

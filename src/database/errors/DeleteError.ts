@@ -2,7 +2,6 @@ import { DatabaseError as DBError } from 'pg';
 import DatabaseError from './DatabaseError';
 
 export default class DeleteError extends DatabaseError {
-    readonly error?: DBError;
 
     constructor(message: string);
 
@@ -17,8 +16,12 @@ export default class DeleteError extends DatabaseError {
         if (error instanceof DBError && typeof message === 'undefined') {
             message = error.message;
         }
-        super(DatabaseError.DELETE_ERROR, message);
+
+        if (error instanceof Error)
+            super(error, DatabaseError.DELETE_ERROR, message);
+        else
+            super(DatabaseError.DELETE_ERROR, message);
+
         this.name = DatabaseError.DELETE_ERROR;
-        this.error = error as DBError;
     }
 }
