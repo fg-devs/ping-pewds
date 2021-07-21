@@ -21,12 +21,10 @@ export namespace Parsed {
     }
 }
 
+export type ValueObject = Array<string|number|boolean>;
+
 export type DBTable = Results.DBBlockedUser
     // | Results.NextTable
 
 export type DBParsed = Parsed.BlockedUser
     // | Parsed.NextTable
-
-export type BaseResult = {}
-
-export type Result<T> = {}

@@ -1,5 +1,4 @@
 import {CommandoClient, CommandoMessage} from "discord.js-commando";
-import path from "path";
 import {CONFIG} from "./globals";
 import getLogger from "./utils/logger";
 import IssueHandler from "./IssueHandler";
@@ -12,11 +11,11 @@ import ClearTimeout from "./commands/pingable/cleartimeout";
 import winston from "winston";
 
 export default class Bot extends CommandoClient {
-    private static bot: Bot;
 
     private readonly events: EventHandler;
 
     private readonly pingableUserController: PingableUserController;
+
     private readonly pingController: PingController;
 
     private readonly database: DatabaseManager;
@@ -61,6 +60,9 @@ export default class Bot extends CommandoClient {
             ])
             // .registerCommandsIn(path.join(__dirname, './commands'))
 
+        // TODO replace this with .registerCommandsIn()
+        //      for some reason I can't get the commands to load from there
+        //      so I am forced to register them manually
         this.registry.registerCommands([
             ExtendTimeout,
             ClearTimeout,
@@ -83,13 +85,6 @@ export default class Bot extends CommandoClient {
 
     public getDatabase() {
         return this.database;
-    }
-
-    public static getBot() {
-        if (Bot.bot !== null) {
-            return Bot.bot;
-        }
-        throw new Error('getBot was called before initialization.');
     }
 
     public static getLogger(section: string): winston.Logger {
