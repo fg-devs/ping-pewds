@@ -36,10 +36,7 @@ npm run pm2
 
 ## Configuration
 
-### General Configuration
-|Key|Default|Description|
-|---|---|---|
-|logLevel|`DEBUG`|**Currently unused**|
+## General Configuration
 
 ### Bot specific configuration
 |Key|Default|Description|
