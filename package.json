@@ -17,7 +17,8 @@
     "dev": "nodemon --watch src/**/* -e ts,json --exec node --inspect=9229 -r ts-node/register src",
     "test-database": "mocha -r ts-node/register \"src/database/tests/**/runner.test.ts\" --watch --watch-files **/*.ts",
     "build": "tsc",
-    "pm2": "pm2 start ecosystem.config.js"
+    "pm2": "pm2 start ecosystem.config.js",
+    "prettier": "prettier --write \"./src/**/*.{ts,tsx}\""
   },
   "dependencies": {
     "async-mutex": "^0.3.1",
@@ -38,6 +39,7 @@
     "chai": "^4.3.0",
     "mocha": "^9.0.2",
     "nodemon": "^2.0.7",
+    "prettier": "^2.3.2",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.4"
   }
