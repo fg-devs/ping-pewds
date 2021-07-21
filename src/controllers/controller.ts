@@ -28,6 +28,6 @@ export default class Controller {
     }
 
     protected getLogger(): winston.Logger {
-        return getLogger(`(controller) ${this.name}`);
+        return Bot.getLogger(`Controller::${this.name}`);
     }
 }

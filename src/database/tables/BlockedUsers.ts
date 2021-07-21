@@ -2,10 +2,7 @@ import Table from "../models/Table";
 import {Parsed, Results, ValidationState} from "../types";
 import {PoolClient} from "pg";
 import DatabaseManager from "../database";
-import getLogger from "../../utils/logger";
 import {InsertError, SelectError, UpdateError} from "../errors";
-
-const logger = getLogger('database:table:blocked_users');
 
 export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Parsed.BlockedUser> {
 
@@ -115,7 +112,6 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
         return response.rows.map(this.parse);
     }
 
-
     protected async init(connection?: PoolClient): Promise<ValidationState> {
         try {
             if (typeof connection === 'undefined') connection = await this.acquire();
@@ -141,7 +137,7 @@ export default class BlockedUsersTable extends Table<Results.DBBlockedUser, Pars
 
             return ValidationState.VALIDATED;
         } catch (e) {
-            logger.error(e);
+            this.getLogger().error(e);
             return ValidationState.INVALID;
         }
     }

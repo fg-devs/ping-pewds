@@ -1,11 +1,8 @@
 import { Message } from 'discord.js';
 import { Command, CommandoMessage } from 'discord.js-commando';
 import Bot from "./Bot";
-import getLogger  from './utils/logger';
 import LogUtil from './utils/LogUtil';
 import winston from "winston";
-// import { Logger } from 'log4js';
-// import LogUtil from '../util/Logging';
 
 export default class IssueHandler {
     /**
@@ -60,6 +57,6 @@ ${LogUtil.breakDownErr(err)}`;
     }
 
     private getLogger(c: Command): winston.Logger {
-        return getLogger(`command::${c.name}`);
+        return Bot.getLogger(`command::${c.name}`);
     }
 }

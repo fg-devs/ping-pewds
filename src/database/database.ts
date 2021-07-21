@@ -2,7 +2,8 @@ import {Pool, PoolConfig, DatabaseError} from "pg";
 import Table from "./models/Table";
 import getLogger from "../utils/logger";
 import BlockedUsersTable from "./tables/BlockedUsers";
-const logger = getLogger('database:manager')
+import Bot from "../Bot";
+import winston from "winston";
 
 type CustomizedConfig = PoolConfig & {
     schema: string;
@@ -15,6 +16,8 @@ export default class DatabaseManager {
     private readonly escapedSchema: string;
     private readonly username?: string;
 
+    private readonly logger: winston.Logger;
+
     public readonly blockedUsers: BlockedUsersTable;
 
     constructor(config: CustomizedConfig) {
@@ -25,6 +28,7 @@ export default class DatabaseManager {
         this.escapedSchema = `"${schema}"`;
 
         this.blockedUsers = new BlockedUsersTable(this);
+        this.logger = DatabaseManager.getLogger();
     }
 
 
@@ -44,17 +48,15 @@ export default class DatabaseManager {
             })
     }
 
+    // no catch so the bot crashes if initialization fails
     public async init() {
         const connection = await this.acquire();
-        try {
-            await connection.query(`CREATE SCHEMA IF NOT EXISTS ${this.schema};`);
-        } catch (e) {
-            console.error(e)
-        }
+
+        await connection.query(`CREATE SCHEMA IF NOT EXISTS ${this.schema};`);
 
         await Promise.all(this.getAttachedTables().map((table) =>
             table.validate(connection)
-        )).catch((err) => logger.error(err));
+        ))
 
         connection.release();
     }
@@ -71,5 +73,9 @@ export default class DatabaseManager {
         return Object.keys(this)
             .map((key) => (this[key as never] as unknown instanceof Table ? this[key as never] as Table : undefined))
             .filter((table) => typeof table !== 'undefined') as Table[];
+    }
+
+    public static getLogger(section?: string) {
+        return Bot.getLogger(`Database${!!section && '::' + section}`);
     }
 }
