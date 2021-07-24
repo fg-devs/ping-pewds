@@ -1,6 +1,8 @@
 import Controller from "./controller";
 import Bot from "../Bot";
-import {Message, MessageEmbed, MessageEmbedOptions} from "discord.js";
+import {Guild, Message, MessageEmbed, MessageEmbedOptions} from "discord.js";
+import {CONFIG} from "../globals";
+import {Parsed} from "../database/types";
 
 
 export default class PunishmentController extends Controller {
@@ -9,9 +11,55 @@ export default class PunishmentController extends Controller {
         super(bot, 'PunishmentController');
     }
 
-    async init(): Promise<void> {
-        // const db = this.bot.getDatabase();
+    public async synchronize(): Promise<void> {
+        const db = this.bot.getDatabase();
+        const activePunishments = await db.punishments.getAllLatest()
 
+        console.log(activePunishments);
+        const guild = this.bot.guilds.resolve('568328702308646912')
+        if (guild === null) throw new Error('Guild not found.');
+        const sync = this.syncPunishment(guild);
+        await Promise.all(activePunishments.map(sync));
+    }
+
+    public syncPunishment(guild: Guild) {
+        const db = this.bot.getDatabase();
+        return async (punishment: Parsed.PunishmentWithCount | null) => {
+            if (punishment === null) {
+                return;
+            }
+
+            let shouldRemovePunishment = punishment.endsAt !== null && punishment.endsAt.getTime() < Date.now() && punishment.active;
+
+            if (shouldRemovePunishment) {
+                await guild.members.unban(punishment.userId, 'They have served their sentence.');
+                await db.punishments.setActive(punishment.id, false)
+                return;
+            }
+
+            // const ban = await guild.fetchBan(punishment.userId)
+            //     .catch(() => null);
+
+            await guild.members.ban(punishment.userId, {
+                reason: this.getPunishmentReason(punishment.count),
+                days: 7
+            })
+
+            console.log('here');
+
+            // if (ban !== null) {
+            //
+            //     console.log('ban found');
+            //     return;
+            // }
+            //
+            // const member = await guild.members.fetch(punishment.userId)
+            //     .catch(() => null);
+            //
+            // if (member === null) {
+            //     throw new Error(`${punishment.userId} is not part of the guild.`);
+            // }
+        }
     }
 
     public async punish(message: Message, pingedUsers: string[]) {
@@ -41,6 +89,9 @@ export default class PunishmentController extends Controller {
      * @todo handle discord punishments
      * @param message
      * @param punishments
+     * @param punishTime
+     * @param pinged
+     * @param lenient
      * @private
      */
     private async handleDiscordPunishment(message: Message, punishments: number, punishTime: boolean | number, pinged: string[], lenient = false) {
@@ -108,6 +159,25 @@ You should have learned by now, but since you haven't, you're no longer welcome.
         await channel.send({
             embed
         })
+    }
+
+    private getPunishmentReason(punishments: number, lenient = false): string {
+        switch (punishments) {
+            case 0: // first punishment
+                return lenient
+                    ? 'Banned for 1 day for pinging users they shouldn\'t.'
+                    : 'Banned for 7 days for pinging users they shouldn\'t.'
+            case 1: // second punishment
+                return lenient
+                    ? 'Banned for 7 days for pinging users they shouldn\'t.'
+                    : 'Banned for 30 days for pinging users they shouldn\'t.'
+            case 2: // third punishment
+                return lenient
+                    ? 'Banned for 30 days for pinging users they shouldn\'t.'
+                    : 'Permanently banned for pinging users they shouldn\'t.';
+            default:
+                return 'Permanently banned for pinging users they shouldn\'t.';
+        }
     }
 
     private getPunishmentTime(punishments: number, lenient = false): number | boolean {

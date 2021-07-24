@@ -22,11 +22,17 @@ export default class Bot extends CommandoClient {
 
     private readonly database: DatabaseManager;
 
+    private readonly synchronizeTimeout: number;
+
+    private synchronizeLoop: NodeJS.Timeout | undefined;
+
     constructor() {
         super({
             commandPrefix: CONFIG.bot.prefix,
             owner: CONFIG.bot.owners,
         });
+
+        this.synchronizeTimeout = 1000 * 60; // 1 minute
 
         this.database = new DatabaseManager({
             host: CONFIG.database.host,
@@ -72,9 +78,14 @@ export default class Bot extends CommandoClient {
      */
     public async start(): Promise<void> {
         await this.database.init();
-        await this.punishmentController.init();
-        await this.pingableUserController.init();
         await this.login(CONFIG.bot.token);
+        await this.punishmentController.synchronize();
+        await this.pingableUserController.init();
+        this.synchronizeLoop = setInterval(
+            () => this.punishmentController.synchronize()
+                .catch((err) => Bot.getLogger('synchronization').error(err)),
+            this.synchronizeTimeout
+        )
     }
 
     /**
