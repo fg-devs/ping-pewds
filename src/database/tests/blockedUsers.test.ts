@@ -4,7 +4,7 @@ import { assert } from 'chai';
 import { CONFIG } from '../../globals';
 import DatabaseManager from '../database';
 
-describe('Start standard DatabaseManager', async function () {
+describe('Start standard blocked users tests', async function () {
     this.timeout(10000);
     let db: DatabaseManager;
 
