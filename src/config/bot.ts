@@ -3,6 +3,7 @@ import Conf from './conf';
 export default class BotConfig extends Conf {
     public readonly token: string;
     public readonly prefix: string;
+    public readonly guild: string;
     public readonly owners: string[];
     public readonly block: string[];
     public readonly blockTimeout: number;
@@ -16,6 +17,7 @@ export default class BotConfig extends Conf {
         super('bot');
         this.token = 'BotToken';
         this.prefix = '!';
+        this.guild = '';
         this.owners = ['id1', 'id2'];
         this.block = [];
         this.excludedChannels = [];

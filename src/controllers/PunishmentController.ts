@@ -15,8 +15,7 @@ export default class PunishmentController extends Controller {
         const db = this.bot.getDatabase();
         const activePunishments = await db.punishments.getAllLatest()
 
-        console.log(activePunishments);
-        const guild = this.bot.guilds.resolve('568328702308646912')
+        const guild = this.bot.guilds.resolve(CONFIG.bot.guild)
         if (guild === null) throw new Error('Guild not found.');
         const sync = this.syncPunishment(guild);
         await Promise.all(activePunishments.map(sync));
@@ -37,28 +36,10 @@ export default class PunishmentController extends Controller {
                 return;
             }
 
-            // const ban = await guild.fetchBan(punishment.userId)
-            //     .catch(() => null);
-
             await guild.members.ban(punishment.userId, {
                 reason: this.getPunishmentReason(punishment.count),
                 days: 7
             })
-
-            console.log('here');
-
-            // if (ban !== null) {
-            //
-            //     console.log('ban found');
-            //     return;
-            // }
-            //
-            // const member = await guild.members.fetch(punishment.userId)
-            //     .catch(() => null);
-            //
-            // if (member === null) {
-            //     throw new Error(`${punishment.userId} is not part of the guild.`);
-            // }
         }
     }
 
