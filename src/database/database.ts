@@ -1,4 +1,4 @@
-import { Pool, PoolConfig, DatabaseError } from 'pg';
+import {Pool, PoolConfig, DatabaseError, PoolClient} from 'pg';
 import Table from './models/Table';
 import getLogger from '../utils/logger';
 import BlockedUsersTable from './tables/BlockedUsers';
@@ -31,11 +31,18 @@ export default class DatabaseManager {
         this.logger = DatabaseManager.getLogger();
     }
 
-    public acquire() {
+    /**
+     * acquire a database connection
+     */
+    public acquire(): Promise<PoolClient> {
         return this.pool.connect();
     }
 
-    public async dropAll() {
+    /**
+     * drops all associated tables
+     * -- only used in tests currently
+     */
+    public async dropAll(): Promise<void> {
         const connection = await this.acquire();
 
         const tables = this.getAttachedTables();
@@ -48,7 +55,11 @@ export default class DatabaseManager {
         );
     }
 
-    // no catch so the bot crashes if initialization fails
+    /**
+     * creates a database schema and validates/creates/migrates all associated tables.
+     *
+     * Does not catch any errors, so the bot crashes if initialization fails
+     */
     public async init() {
         const connection = await this.acquire();
 
@@ -61,15 +72,21 @@ export default class DatabaseManager {
         connection.release();
     }
 
-    public getSchema() {
+    /**
+     * gets the original, unescape schema string
+     */
+    public getSchema(): string {
         return this.schema;
     }
 
-    public getEscapedSchema() {
+    /**
+     * gets a properly escaped schema string
+     */
+    public getEscapedSchema(): string {
         return this.escapedSchema;
     }
 
-    private getAttachedTables() {
+    private getAttachedTables(): Table[] {
         return Object.keys(this)
             .map((key) =>
                 (this[key as never] as unknown) instanceof Table

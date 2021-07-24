@@ -31,10 +31,20 @@ export default class ExtendTimeout extends Command {
         });
     }
 
-    hasPermission(message: CommandoMessage, ownerOverride?: boolean): boolean | string {
-        return CONFIG.bot.block.indexOf(message.author.id) >= 0;
+    /**
+     * compares the message author id to the 'block' config array
+     * @param message
+     * @param ownerOverride
+     */
+    hasPermission(message: CommandoMessage, ownerOverride?: boolean): boolean {
+        return CONFIG.bot.block.indexOf(message.author.id) >= 0 || ownerOverride === true;
     }
 
+    /**
+     * extends the active window of the author by the amount of time in minutes given by the commands parameter
+     * @param msg
+     * @param args
+     */
     public async run(msg: CommandoMessage, args: Args): Promise<null> {
         const { timeout } = args;
         const author = msg.author.id;
@@ -45,11 +55,12 @@ export default class ExtendTimeout extends Command {
             .extend(author, date.getTime(), timeout, true);
         date.setTime(date.getTime() + timeout * 1000 * 60);
         if (extended) {
-            await msg.delete();
+            // await msg.delete(); // maybe unnecessary
             const notification = await msg.channel.send({
-                content: `<@${author}>, you'll be able to be pinged until ${date.toLocaleTimeString()}.`,
+                content: `<@${author}>, you'll be able to be pinged until **<t:${(date.getTime() / 1000).toFixed(0)}:F>**.\nPlease note that this command should only be used if you plan on going AFK. Once you speak, the timer will reset to **${CONFIG.bot.blockTimeout} minutes** after your last message.`,
             });
-            await notification.delete({ timeout: 15000 });
+            await notification.delete({ timeout: 30000 })
+                .catch(() => {}); // No need to worry about this.
         }
 
         return null;

@@ -23,7 +23,10 @@ export class PingableUserController extends Controller {
         super(bot, 'PingableUserController');
     }
 
-    public async init() {
+    /**
+     * gets user data from the database and sets the initial last message timestamp for each user
+     */
+    public async init(): Promise<void> {
         const db = this.bot.getDatabase();
         const ids = CONFIG.bot.block
             .filter((id) => id.match(/^\d+$/))
@@ -41,7 +44,7 @@ export class PingableUserController extends Controller {
      * If the sender is a user who should have pings blocked,
      * extend the timeout for the user and notify notifiable roles
      */
-    public async handleMessage(message: Message) {
+    public async handleMessage(message: Message): Promise<boolean> {
         if (
             CONFIG.bot.block.indexOf(message.author.id) >= 0 &&
             message.command === null
@@ -148,6 +151,11 @@ export class PingableUserController extends Controller {
         }
     }
 
+    /**
+     * clears/stops the notify timer for the selected user
+     * @param snowflake
+     * @private
+     */
     private clearTimeout(snowflake: string) {
         if (this.notifyTimeouts[snowflake]) {
             clearTimeout(this.notifyTimeouts[snowflake]);
@@ -155,6 +163,11 @@ export class PingableUserController extends Controller {
         }
     }
 
+    /**
+     * clears the update queue timer for the selected user
+     * @param snowflake
+     * @private
+     */
     private clearQueue(snowflake: string) {
         if (this.updateQueue[snowflake]) {
             clearTimeout(this.updateQueue[snowflake]);
@@ -162,6 +175,13 @@ export class PingableUserController extends Controller {
         }
     }
 
+    /**
+     * adds an update to the update queue. If an update is already queued for the selected user, it clears it
+     * and sets a new update in place of it.
+     * @param snowflake
+     * @param cb
+     * @private
+     */
     private queueUpdate(snowflake: string, cb: Function) {
         if (this.updateQueue[snowflake]) clearTimeout(this.updateQueue[snowflake]);
 

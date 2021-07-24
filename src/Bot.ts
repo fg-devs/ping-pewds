@@ -63,29 +63,20 @@ export default class Bot extends CommandoClient {
         this.registry.registerCommands([ExtendTimeout, ClearTimeout]);
     }
 
-    public async start() {
+    /**
+     * start the bot by initializing the database and controllers, then logging into Discord.
+     */
+    public async start(): Promise<void> {
         await this.database.init();
         await this.pingableUserController.init();
         await this.login(CONFIG.bot.token);
     }
 
-    public getPingableUserController() {
-        return this.pingableUserController;
-    }
-
-    public getPingController() {
-        return this.pingController;
-    }
-
-    public getDatabase() {
-        return this.database;
-    }
-
-    public static getLogger(section: string): winston.Logger {
-        return getLogger(`Bot::${section}`);
-    }
-
-    private registerEvents() {
+    /**
+     * Register message listeners and command handlers
+     * @private
+     */
+    private registerEvents(): void {
         const issues = new IssueHandler();
         this.on('commandError', issues.onCommandError.bind(issues))
             .on('commandRun', issues.onCommandRun.bind(issues))
@@ -96,9 +87,29 @@ export default class Bot extends CommandoClient {
         this.once('ready', this.events.onReady.bind(this.events));
     }
 
+    /**
+     * checks to see if the message starts with commandPrefix and message is not within a guild
+     * @param msg
+     * @private
+     */
     private inhibitor(msg: CommandoMessage): false | string {
         const passes = msg.content.startsWith(this.commandPrefix) && msg.guild !== null;
-
         return passes ? false : '';
+    }
+
+    public getPingableUserController(): PingableUserController {
+        return this.pingableUserController;
+    }
+
+    public getPingController(): PingController {
+        return this.pingController;
+    }
+
+    public getDatabase(): DatabaseManager {
+        return this.database;
+    }
+
+    public static getLogger(section: string): winston.Logger {
+        return getLogger(`Bot::${section}`);
     }
 }

@@ -14,7 +14,7 @@ export class PingController extends Controller {
      * telling the user to not ping this user.
      * @todo handle punishments
      */
-    public async handleMessage(message: Message) {
+    public async handleMessage(message: Message): Promise<boolean> {
         if (
             message.author.bot ||
             CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0
@@ -73,7 +73,7 @@ export class PingController extends Controller {
      * compares the current timestamp with the timestamp of the last message sent by the managed users
      * @param snowflake the user's snowflake id
      */
-    canPing(snowflake: string) {
+    canPing(snowflake: string): boolean {
         const now = Date.now();
         const cached = this.bot.getPingableUserController().getCache()[snowflake];
         if (typeof cached === 'number') {

@@ -26,6 +26,10 @@ export default class BlockedUsersTable extends Table<
         };
     }
 
+    /**
+     * creates a record for each user that should have pings blocked.
+     * @param ids user ids to have records created for
+     */
     public async initializeUsers(ids: number | number[]): Promise<boolean>;
     public async initializeUsers(
         connection: PoolClient,
@@ -55,6 +59,11 @@ export default class BlockedUsersTable extends Table<
         return response.rowCount > 0;
     }
 
+    /**
+     * Updates the timestamp for the last message send by the user id provided
+     * @param id user id to have record updated
+     * @param timestamp the timestamp to be updated to
+     */
     public async updateLastMessage(id: number, timestamp: number): Promise<boolean>;
     public async updateLastMessage(
         connection: PoolClient,
@@ -83,6 +92,10 @@ export default class BlockedUsersTable extends Table<
         return response.rowCount === 1;
     }
 
+    /**
+     * gets the last message timestamp in Date form for the selected user id.
+     * @param id user id to get the timestamp from
+     */
     public async getLastMessage(id: number): Promise<Date>;
     public async getLastMessage(connection: PoolClient, id: number): Promise<Date>;
     public async getLastMessage(
@@ -110,6 +123,10 @@ export default class BlockedUsersTable extends Table<
         return new Date('01/01/1970');
     }
 
+    /**
+     * returns an array for the entire record for the selected user id(s)
+     * @param ids users ids to fetch
+     */
     public async getById(
         ids: number | number[]
     ): Promise<Array<Parsed.BlockedUser | null>>;
@@ -141,6 +158,11 @@ export default class BlockedUsersTable extends Table<
         return response.rows.map(this.parse);
     }
 
+    /**
+     * initializes the table
+     * @param connection
+     * @protected
+     */
     protected async init(connection?: PoolClient): Promise<ValidationState> {
         try {
             if (typeof connection === 'undefined') connection = await this.acquire();
@@ -170,6 +192,11 @@ export default class BlockedUsersTable extends Table<
         }
     }
 
+    /**
+     * parses the raw database response into a usable object
+     * @param data
+     * @protected
+     */
     protected parse(data?: Results.DBBlockedUser): Parsed.BlockedUser | null {
         if (data) {
             return {

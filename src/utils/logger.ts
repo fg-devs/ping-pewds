@@ -4,7 +4,12 @@ type Meta = {
     [s: string]: string | boolean | number | Meta | undefined;
 };
 
-function getLogger(name: string, meta?: Meta) {
+/**
+ * get a logger instance with {name} and optional {meta} data
+ * @param name
+ * @param meta
+ */
+function getLogger(name: string, meta?: Meta): winston.Logger {
     if (winston.loggers.has(name)) {
         return winston.loggers.get(name);
     }

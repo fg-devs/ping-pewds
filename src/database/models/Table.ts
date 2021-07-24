@@ -31,7 +31,10 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
         this.mappedKeys = {} as any;
     }
 
-    public acquire() {
+    /**
+     * get a database connection from DatabaseManager
+     */
+    public acquire(): Promise<PoolClient> {
         return this.manager.acquire();
     }
 
@@ -109,7 +112,12 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
         throw new DatabaseError('should never happen', 'but it did, so...');
     }
 
-    protected async tableExists(connection?: PoolClient) {
+    /**
+     * Checks to see if the table exists
+     * @param connection
+     * @protected
+     */
+    protected async tableExists(connection?: PoolClient): Promise<boolean> {
         const response = await this.query(
             connection,
             `select COUNT(*) as count from information_schema.columns where table_schema = $1 and table_name = $2;`,
@@ -121,14 +129,24 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
         return response.rows[0].count > 0;
     }
 
-    public async drop(connection?: PoolClient) {
+    /**
+     * Drops the current table
+     * @param connection
+     */
+    public async drop(connection?: PoolClient): Promise<void> {
         await this.query(connection, `DROP TABLE ${this.full};`);
     }
 
-    public getName() {
+    /**
+     * gets the database name string
+     */
+    public getName(): string {
         return this.name;
     }
 
+    /**
+     * gets the fully qualified table name. ("schema"."table_name")
+     */
     public getFullName() {
         return this.full;
     }
@@ -165,14 +183,29 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
         }
     }
 
+    /**
+     * Parses database response into a usable, parsed object
+     * @param data
+     * @protected
+     */
     protected parse(data?: Row): Parsed | null {
         throw new DatabaseError(`Row parse for ${this.full} has not been implemented.`);
     }
 
+    /**
+     * Used to make changes to the table after the table has been created, instead of having to drop and recreate.
+     * @param connection
+     * @protected
+     */
     protected async migrate(connection?: PoolClient): Promise<ValidationState> {
         return ValidationState.VALIDATED;
     }
 
+    /**
+     * initializes the table by creating it if it does not exist, along with creating all required indexes
+     * @param connection
+     * @protected
+     */
     protected async init(connection?: PoolClient): Promise<ValidationState> {
         throw new Error(`Table init for ${this.full} has not been implemented.`);
     }
