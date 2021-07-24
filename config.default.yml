@@ -8,6 +8,7 @@ bot:
   notifyRoles: []       # Role IDs that will get notified when a blocked user is active
   notifyChannels: []    # Channel IDs that will get notified when a blocked user is active
   excludedChannels: []  # Channel IDs that should be ignored by the bot
+  lenientRoles: []      # Role IDs that when punished, will have lighter punishments
 database:
   host: 'localhost'
   port: 5432
