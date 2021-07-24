@@ -9,6 +9,7 @@ import { PingController } from './controllers/PingController';
 import ExtendTimeout from './commands/pingable/extendtimeout';
 import ClearTimeout from './commands/pingable/cleartimeout';
 import winston from 'winston';
+import PunishmentController from "./controllers/PunishmentController";
 
 export default class Bot extends CommandoClient {
     private readonly events: EventHandler;
@@ -16,6 +17,8 @@ export default class Bot extends CommandoClient {
     private readonly pingableUserController: PingableUserController;
 
     private readonly pingController: PingController;
+
+    private readonly punishmentController: PunishmentController;
 
     private readonly database: DatabaseManager;
 
@@ -37,6 +40,7 @@ export default class Bot extends CommandoClient {
 
         this.pingableUserController = new PingableUserController(this);
         this.pingController = new PingController(this);
+        this.punishmentController = new PunishmentController(this);
 
         this.events = new EventHandler(this);
         this.registerEvents();
@@ -68,6 +72,7 @@ export default class Bot extends CommandoClient {
      */
     public async start(): Promise<void> {
         await this.database.init();
+        await this.punishmentController.init();
         await this.pingableUserController.init();
         await this.login(CONFIG.bot.token);
     }
@@ -103,6 +108,10 @@ export default class Bot extends CommandoClient {
 
     public getPingController(): PingController {
         return this.pingController;
+    }
+
+    public getPunishmentController(): PunishmentController {
+        return this.punishmentController;
     }
 
     public getDatabase(): DatabaseManager {
