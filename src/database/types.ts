@@ -11,6 +11,14 @@ export namespace Results {
         user_id: number;
         user_last_message: number;
     };
+
+    export type DBPunishment = {
+        punishment_id: number;
+        punishment_user_id: number;
+        punishment_ends_at: number;
+        punishment_expires_at: number | null;
+        punishment_created_at: number;
+    }
 }
 
 export namespace Parsed {
@@ -18,12 +26,21 @@ export namespace Parsed {
         id: number;
         lastMessage: number;
     };
+    export type Punishment = {
+        id: number;
+        userId: number;
+        endsAt: Date;
+        expiresAt: Date | null;
+        createdAt: Date;
+    }
 }
 
 export type ValueObject = Array<string | number | boolean>;
 
-export type DBTable = Results.DBBlockedUser;
+export type DBTable = Results.DBBlockedUser
+    | Results.DBPunishment
 // | Results.NextTable
 
-export type DBParsed = Parsed.BlockedUser;
+export type DBParsed = Parsed.BlockedUser
+    | Parsed.Punishment
 // | Parsed.NextTable

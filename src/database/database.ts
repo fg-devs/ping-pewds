@@ -4,6 +4,7 @@ import getLogger from '../utils/logger';
 import BlockedUsersTable from './tables/BlockedUsers';
 import Bot from '../Bot';
 import winston from 'winston';
+import PunishmentsTable from "./tables/Punishments";
 
 type CustomizedConfig = PoolConfig & {
     schema: string;
@@ -19,6 +20,7 @@ export default class DatabaseManager {
     private readonly logger: winston.Logger;
 
     public readonly blockedUsers: BlockedUsersTable;
+    public readonly punishments: PunishmentsTable;
 
     constructor(config: CustomizedConfig) {
         const { schema, ...poolConfig } = config;
@@ -28,6 +30,8 @@ export default class DatabaseManager {
         this.escapedSchema = `"${schema}"`;
 
         this.blockedUsers = new BlockedUsersTable(this);
+        this.punishments = new PunishmentsTable(this);
+
         this.logger = DatabaseManager.getLogger();
     }
 
