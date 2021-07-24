@@ -5,8 +5,8 @@ import {PoolClient} from "pg";
 import {InsertError, SelectError} from "../errors";
 
 type PunishmentObject = {
-    userId: number;
-    endsAt: number;
+    userId: number | string;
+    endsAt: number | boolean;
     expiresAt?: number;
 }
 
@@ -36,23 +36,29 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
     public async create(punishment: PunishmentObject): Promise<boolean>
     public async create(connection: PoolClient, punishment: PunishmentObject): Promise<boolean>
     public async create(connection: PoolClient | PunishmentObject | undefined, punishment?: PunishmentObject): Promise<boolean> {
-        if (typeof (connection as PunishmentObject).userId === 'number') {
+        if (typeof (connection as PunishmentObject).userId === 'number'
+            || typeof (connection as PunishmentObject).userId === 'string') {
             punishment = connection as PunishmentObject;
             connection = undefined;
         }
 
-        if (typeof punishment?.userId !== 'number') {
+        if (typeof punishment?.userId !== 'number' && typeof punishment?.userId !== 'string') {
             throw new InsertError('punishment object is not valid')
         }
 
         const values = [
             punishment.userId,
-            Math.round(punishment.endsAt / 1000),
+            // Math.round(punishment.endsAt / 1000),
         ]
         const fields = [
             this.mappedKeys.userId,
-            this.mappedKeys.endsAt
+            // this.mappedKeys.endsAt
         ]
+
+        if (typeof punishment.endsAt === 'number') {
+            values.push(Math.round(punishment.endsAt / 1000))
+            fields.push(this.mappedKeys.endsAt);
+        }
 
         if (typeof punishment.expiresAt === 'number') {
             values.push(Math.round(punishment.expiresAt / 1000))
@@ -70,26 +76,26 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
         return response.rowCount > 0;
     }
 
-    public async getByUserId(userId: number): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(userId: number, includeEnded: boolean): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(userId: number, includeEnded: boolean, includeExpired: boolean): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(connection: PoolClient, userId: number): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(connection: PoolClient, userId: number, includeEnded: boolean): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(connection: PoolClient, userId: number, includeEnded: boolean, includeExpired: boolean): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(connection: PoolClient | number | undefined, userId?: number | boolean, includeEnded = false, includeExpired = false): Promise<Array<Parsed.Punishment | null>> {
-        if (typeof connection === 'number') {
+    public async getByUserId(userId: string | number): Promise<Array<Parsed.Punishment | null>>
+    public async getByUserId(userId: string | number, includeEnded: boolean): Promise<Array<Parsed.Punishment | null>>
+    public async getByUserId(userId: string | number, includeEnded: boolean, includeExpired: boolean): Promise<Array<Parsed.Punishment | null>>
+    public async getByUserId(connection: PoolClient, userId: string | number): Promise<Array<Parsed.Punishment | null>>
+    public async getByUserId(connection: PoolClient, userId: string | number, includeEnded: boolean): Promise<Array<Parsed.Punishment | null>>
+    public async getByUserId(connection: PoolClient, userId: string | number, includeEnded: boolean, includeExpired: boolean): Promise<Array<Parsed.Punishment | null>>
+    public async getByUserId(connection: PoolClient | string | number | undefined, userId?: string | number | boolean, includeEnded = false, includeExpired = false): Promise<Array<Parsed.Punishment | null>> {
+        if (typeof connection === 'string' || typeof connection === 'number') {
             includeExpired = includeEnded || false;
             includeEnded = userId as boolean || false;
             userId = connection;
             connection = undefined;
         }
         
-        if (typeof userId !== 'number')
+        if (typeof userId !== 'number' && typeof userId !== 'string')
             throw new SelectError('user id is not a number');
 
         let filter = '';
         if (!includeEnded) {
-            filter = `AND ${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) `;
+            filter = `AND (${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.endsAt} IS NULL) `;
         }
 
         if (!includeExpired) {
@@ -117,7 +123,7 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
                  (
                      ${this.mappedKeys.id} serial NOT NULL,
                      ${this.mappedKeys.userId} BIGINT NOT NULL,
-                     ${this.mappedKeys.endsAt} INT NOT NULL,
+                     ${this.mappedKeys.endsAt} INT,
                      ${this.mappedKeys.expiresAt} INT,
                      ${this.mappedKeys.createdAt} INT DEFAULT EXTRACT(EPOCH FROM NOW())
                  );`
@@ -146,7 +152,7 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
             return {
                 id: data.punishment_user_id,
                 userId: data.punishment_user_id,
-                endsAt: new Date(data.punishment_ends_at * 1000),
+                endsAt: data.punishment_ends_at ? new Date(data.punishment_ends_at * 1000) : null,
                 expiresAt: data.punishment_expires_at ? new Date(data.punishment_expires_at * 1000) : null,
                 createdAt: new Date(data.punishment_created_at * 1000)
             }

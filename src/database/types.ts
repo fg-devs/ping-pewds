@@ -29,10 +29,10 @@ export namespace Parsed {
     export type Punishment = {
         id: number;
         userId: number;
-        endsAt: Date;
+        endsAt: Date | null;
         expiresAt: Date | null;
         createdAt: Date;
-    }
+    };
 }
 
 export type ValueObject = Array<string | number | boolean>;
