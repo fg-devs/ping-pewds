@@ -31,14 +31,18 @@ export default class PunishmentController extends Controller {
             let shouldRemovePunishment = punishment.endsAt !== null && punishment.endsAt.getTime() < Date.now() && punishment.active;
 
             if (shouldRemovePunishment) {
+                // TODO handle unmuting
                 await guild.members.unban(punishment.userId, 'They have served their sentence.');
-                await db.punishments.setActive(punishment.id, false)
+                await db.punishments.setActive(punishment.id, false);
+                this.getLogger().info(`${punishment.userId} has served their sentence.`)
                 return;
             }
 
+            // TODO handle muted punishments
+
             await guild.members.ban(punishment.userId, {
                 reason: this.getPunishmentReason(punishment.count),
-                days: 7
+                days: 1
             })
         }
     }
@@ -136,17 +140,30 @@ You should have learned by now, but since you haven't, you're no longer welcome.
                 }
                 break;
         }
+
         const channel = await message.author.createDM();
         await channel.send({
             embed
         })
+
+        if (lenient && punishments === 0) {
+            // TODO handle lenient first time offender (mute them)
+        } else {
+            await message.guild?.members.ban(message.author, {
+                reason: this.getPunishmentReason(punishments, lenient),
+                days: 1 // since the bot has to synchronize manually, this doesn't really matter
+            })
+        }
+
+
+        this.getLogger().info(`${message.author.id} was ${this.getPunishmentReason(punishments, lenient)}`)
     }
 
     private getPunishmentReason(punishments: number, lenient = false): string {
         switch (punishments) {
             case 0: // first punishment
                 return lenient
-                    ? 'Banned for 1 day for pinging users they shouldn\'t.'
+                    ? 'Muted for 1 day for pinging users they shouldn\'t.'
                     : 'Banned for 7 days for pinging users they shouldn\'t.'
             case 1: // second punishment
                 return lenient
@@ -166,7 +183,6 @@ You should have learned by now, but since you haven't, you're no longer welcome.
         const now = Date.now();
 
         const days = (days: number) => now + days * 1000 * 60 * 60 * 24;
-        const minutes = (minutes: number) => now + minutes * 1000 * 60;
 
         switch (punishments) {
             case 0: // first punishment
