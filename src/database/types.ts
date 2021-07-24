@@ -14,10 +14,15 @@ export namespace Results {
 
     export type DBPunishment = {
         punishment_id: number;
-        punishment_user_id: number;
+        punishment_user_id: string;
+        punishment_active: number;
         punishment_ends_at: number;
         punishment_expires_at: number | null;
         punishment_created_at: number;
+    }
+
+    export type DBPunishmentWithCount = DBPunishment & {
+        count: string;
     }
 }
 
@@ -28,11 +33,15 @@ export namespace Parsed {
     };
     export type Punishment = {
         id: number;
-        userId: number;
+        userId: string;
+        active: boolean;
         endsAt: Date | null;
         expiresAt: Date | null;
         createdAt: Date;
     };
+    export type PunishmentWithCount = Punishment & {
+        count: number;
+    }
 }
 
 export type ValueObject = Array<string | number | boolean>;

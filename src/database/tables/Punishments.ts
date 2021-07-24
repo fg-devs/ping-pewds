@@ -2,12 +2,13 @@ import Table from "../models/Table";
 import {Parsed, Results, ValidationState} from "../types";
 import DatabaseManager from "../database";
 import {PoolClient} from "pg";
-import {InsertError, SelectError} from "../errors";
+import {InsertError, SelectError, UpdateError} from "../errors";
 
 type PunishmentObject = {
     userId: number | string;
     endsAt: number | boolean;
     expiresAt?: number;
+    active?: boolean;
 }
 
 export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed.Punishment> {
@@ -22,11 +23,12 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
         super(manager, 'punishments');
 
         this.nullables = ['expiresAt']
-        this.accepted = ['userId', 'endsAt', 'expiresAt'];
+        this.accepted = ['userId', 'endsAt', 'active', 'expiresAt'];
 
         this.mappedKeys = {
             id: 'punishment_id',
             userId: 'punishment_user_id',
+            active: 'punishment_active',
             endsAt: 'punishment_ends_at',
             expiresAt: 'punishment_expires_at',
             createdAt: 'punishment_created_at'
@@ -56,13 +58,18 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
         ]
 
         if (typeof punishment.endsAt === 'number') {
-            values.push(Math.round(punishment.endsAt / 1000))
+            values.push(Math.round(punishment.endsAt / 1000));
             fields.push(this.mappedKeys.endsAt);
         }
 
         if (typeof punishment.expiresAt === 'number') {
-            values.push(Math.round(punishment.expiresAt / 1000))
+            values.push(Math.round(punishment.expiresAt / 1000));
             fields.push(this.mappedKeys.expiresAt);
+        }
+
+        if (typeof punishment.active === 'boolean') {
+            values.push(punishment.active ? 1 : 0);
+            fields.push(this.mappedKeys.active);
         }
 
         const response = await this.query(
@@ -113,6 +120,94 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
         return response.rows.map(this.parse);
     }
 
+    public async getAllLatest(): Promise<Array<Parsed.PunishmentWithCount | null>>
+    public async getAllLatest(connection: PoolClient): Promise<Array<Parsed.PunishmentWithCount | null>>
+    public async getAllLatest(connection?: PoolClient): Promise<Array<Parsed.PunishmentWithCount | null>> {
+
+        const response = await this.query<Results.DBPunishmentWithCount>(
+            connection,
+            `SELECT DISTINCT ON(${this.mappedKeys.userId}) *, (
+                SELECT count(*) as count FROM ${this.full} b
+                    WHERE b.${this.mappedKeys.userId} = a.${this.mappedKeys.userId}
+                    -- AND (b.${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR b.${this.mappedKeys.endsAt} IS NULL)
+                    AND (b.${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR b.${this.mappedKeys.expiresAt} IS NULL)
+                ) FROM ${this.full} a WHERE 
+                (a.${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR a.${this.mappedKeys.expiresAt} IS NULL)
+                -- AND (a.${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR a.${this.mappedKeys.endsAt} IS NULL)
+                AND a.${this.mappedKeys.active} = 1
+                ORDER BY ${this.mappedKeys.userId}, ${this.mappedKeys.id} DESC;`
+        ).catch((err) => new SelectError(err))
+
+        if (response instanceof Error) throw response;
+
+        return response.rows.map((item) => {
+            const parsed = this.parse(item);
+            if (parsed) {
+                return {
+                    ...parsed,
+                    count: Number.parseInt(item.count)
+                };
+            }
+            return null;
+        });
+    }
+
+    public async getAllActive(): Promise<Array<Parsed.PunishmentWithCount | null>>
+    public async getAllActive(connection: PoolClient): Promise<Array<Parsed.PunishmentWithCount | null>>
+    public async getAllActive(connection?: PoolClient): Promise<Array<Parsed.PunishmentWithCount | null>> {
+
+        // original query that didn't have the total number of active punishments
+        const sql1 = `SELECT DISTINCT ON(${this.mappedKeys.userId}) * FROM ${this.full} WHERE
+                (${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.endsAt} IS NULL)
+                AND (${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.expiresAt} IS NULL)
+            ORDER BY ${this.mappedKeys.userId}, ${this.mappedKeys.id} DESC;`
+
+        const response = await this.query<Results.DBPunishmentWithCount>(
+            connection,
+            `SELECT DISTINCT ON(${this.mappedKeys.userId}) *, (
+                SELECT count(*) as count FROM ${this.full} b
+                    WHERE b.${this.mappedKeys.userId} = a.${this.mappedKeys.userId}
+                    AND (b.${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR b.${this.mappedKeys.endsAt} IS NULL)
+                    AND (b.${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR b.${this.mappedKeys.expiresAt} IS NULL)
+                ) FROM ${this.full} a WHERE
+                    (a.${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR a.${this.mappedKeys.endsAt} IS NULL)
+                    AND (a.${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR a.${this.mappedKeys.expiresAt} IS NULL);`
+        ).catch((err) => new SelectError(err))
+
+        if (response instanceof Error) throw response;
+
+        return response.rows.map((item) => {
+            const parsed = this.parse(item);
+            if (parsed) {
+                return {
+                    ...parsed,
+                    count: Number.parseInt(item.count)
+                };
+            }
+            return null;
+        });
+    }
+
+    public async setActive(id: string | number, active: boolean): Promise<boolean>
+    public async setActive(connection: PoolClient, id: string | number, active: boolean): Promise<boolean>
+    public async setActive(connection: PoolClient | string | number | undefined, id: string | number | boolean, active?: boolean): Promise<boolean> {
+        if (typeof connection === 'string' || typeof connection === 'number') {
+            active = id as boolean;
+            id = connection;
+            connection = undefined;
+        }
+
+        const response = await this.query(
+            connection as PoolClient | undefined,
+            `UPDATE ${this.full} SET ${this.mappedKeys.active} = $2 WHERE ${this.mappedKeys.id} = $1`,
+            [id, active ? 1 : 0]
+        ).catch((err) => new UpdateError(err));
+
+        if (response instanceof Error) throw response;
+
+        return response.rowCount > 0;
+    }
+
     protected async init(connection?: PoolClient): Promise<ValidationState> {
         try {
             if (typeof connection === 'undefined') connection = await this.acquire();
@@ -123,6 +218,7 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
                  (
                      ${this.mappedKeys.id} serial NOT NULL,
                      ${this.mappedKeys.userId} BIGINT NOT NULL,
+                     ${this.mappedKeys.active} INT DEFAULT 1,
                      ${this.mappedKeys.endsAt} INT,
                      ${this.mappedKeys.expiresAt} INT,
                      ${this.mappedKeys.createdAt} INT DEFAULT EXTRACT(EPOCH FROM NOW())
@@ -134,6 +230,12 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
                 `CREATE INDEX ${this.name}_user_id_index
                     ON ${this.full} (${this.mappedKeys.userId});`
             );
+
+            await this.query(
+                connection,
+                `CREATE INDEX ${this.name}_ends_at_index
+                    ON ${this.full} (${this.mappedKeys.endsAt});`
+            )
 
             await this.query(
                 connection,
@@ -150,7 +252,8 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
     protected parse(data?: Results.DBPunishment): Parsed.Punishment | null {
         if (data) {
             return {
-                id: data.punishment_user_id,
+                id: data.punishment_id,
+                active: data.punishment_active === 1,
                 userId: data.punishment_user_id,
                 endsAt: data.punishment_ends_at ? new Date(data.punishment_ends_at * 1000) : null,
                 expiresAt: data.punishment_expires_at ? new Date(data.punishment_expires_at * 1000) : null,
