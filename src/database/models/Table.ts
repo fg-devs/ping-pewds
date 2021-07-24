@@ -134,7 +134,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
      * @param connection
      */
     public async drop(connection?: PoolClient): Promise<void> {
-        await this.query(connection, `DROP TABLE ${this.full};`);
+        await this.query(connection, `DROP TABLE IF EXISTS ${this.full};`);
     }
 
     /**
