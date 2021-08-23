@@ -46,24 +46,25 @@ export class PingableUserController extends Controller {
      */
     public async handleMessage(message: Message): Promise<boolean> {
         if (
-            CONFIG.bot.block.indexOf(message.author.id) >= 0 &&
-            message.command === null
+            CONFIG.bot.block.indexOf(message.author.id) < 0 &&
+            message.command !== null
         ) {
-            const now = Date.now();
-            await this.extend(message.author.id, now);
-
-            await this.notify(message);
-            this.getLogger().verbose(
-                `message sent by '${
-                    message.author.username
-                }' at ${now}... Waiting until ${
-                    now + CONFIG.bot.blockTimeout * 1000 * 60
-                }`
-            );
-
-            return true;
+            return false
         }
-        return false;
+
+        const now = Date.now();
+        await this.extend(message.author.id, now);
+
+        await this.notify(message);
+        this.getLogger().verbose(
+            `message sent by '${
+                message.author.username
+            }' at ${now}... Waiting until ${
+                now + CONFIG.bot.blockTimeout * 1000 * 60
+            }`
+        );
+
+        return true;
     }
 
     /**

@@ -22,43 +22,43 @@ export class PingController extends Controller {
             return false;
 
         const flaggedMentions = this.getFlaggedMentions(message);
-        if (flaggedMentions.length > 0) {
-            const pingedUsers: string[] = [];
-            let canPing = true;
-            for (const mentionId of flaggedMentions) {
-                if (!this.canPing(mentionId)) {
-                    canPing = false;
-                    const flaggedMention = message.mentions.users.get(mentionId);
-                    if (flaggedMention) {
-                        pingedUsers.push(`<@${flaggedMention.id}>`);
-                        this.getLogger().info(
-                            `A mention of '${flaggedMention.username}' was caught and  is pending deletion.`
-                        );
-                    }
+        if (flaggedMentions.length === 0)
+            return false;
+
+        const pingedUsers: string[] = [];
+        let canPing = true;
+        for (const mentionId of flaggedMentions) {
+            if (!this.canPing(mentionId)) {
+                canPing = false;
+                const flaggedMention = message.mentions.users.get(mentionId);
+                if (flaggedMention) {
+                    pingedUsers.push(`<@${flaggedMention.id}>`);
+                    this.getLogger().info(
+                        `A mention of '${flaggedMention.username}' was caught and  is pending deletion.`
+                    );
                 }
             }
-
-            if (!canPing) {
-                await message.delete().catch(this.handleError);
-                const notification = await message.channel
-                    .send({
-                        content: `Please do not ping ${pingedUsers.join(
-                            ', '
-                        )} unless they are active.`,
-                        allowedMentions: { users: [] },
-                    })
-                    .catch(this.handleError);
-
-                // TODO handle punishments
-
-                if (notification) {
-                    await notification.delete({ timeout: 10000 }).catch(this.handleError);
-                }
-            }
-
-            return true;
         }
-        return false;
+
+        if (!canPing) {
+            await message.delete().catch(this.handleError);
+            const notification = await message.channel
+                .send({
+                    content: `Please do not ping ${pingedUsers.join(
+                        ', '
+                    )} unless they are active.`,
+                    allowedMentions: { users: [] },
+                })
+                .catch(this.handleError);
+
+            // TODO handle punishments
+
+            if (notification) {
+                await notification.delete({ timeout: 10000 }).catch(this.handleError);
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -73,7 +73,7 @@ export class PingController extends Controller {
      * compares the current timestamp with the timestamp of the last message sent by the managed users
      * @param snowflake the user's snowflake id
      */
-    canPing(snowflake: string): boolean {
+    private canPing(snowflake: string): boolean {
         const now = Date.now();
         const cached = this.bot.getPingableUserController().getCache()[snowflake];
         if (typeof cached === 'number') {
