@@ -1,7 +1,7 @@
+import { Message } from 'discord.js';
 import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
-import { Message } from 'discord.js';
 
 export class PingController extends Controller {
     constructor(bot: Bot) {
@@ -22,8 +22,7 @@ export class PingController extends Controller {
             return false;
 
         const flaggedMentions = this.getFlaggedMentions(message);
-        if (flaggedMentions.length === 0)
-            return false;
+        if (flaggedMentions.length === 0) return false;
 
         const pingedUsers: string[] = [];
         let canPing = true;

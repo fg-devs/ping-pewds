@@ -23,7 +23,7 @@ export default class ExtendTimeout extends Command {
                     prompt: 'Timeout',
                     label: 'time in minutes to extend',
                     validate: (val: string) => val.match(/^\d+$/) !== null,
-                    parse: (val: string) => Number.parseInt(val),
+                    parse: (val: string) => Number.parseInt(val, 10),
                     wait: 10,
                     error: 'Please enter a numeric value representing the number of minutes to extend.',
                 },
@@ -57,10 +57,14 @@ export default class ExtendTimeout extends Command {
         if (extended) {
             // await msg.delete(); // maybe unnecessary
             const notification = await msg.channel.send({
-                content: `<@${author}>, you'll be able to be pinged until **<t:${(date.getTime() / 1000).toFixed(0)}:F>**.\nPlease note that this command should only be used if you plan on going AFK. Once you speak, the timer will reset to **${CONFIG.bot.blockTimeout} minutes** after your last message.`,
+                content: `<@${author}>, you'll be able to be pinged until **<t:${(
+                    date.getTime() / 1000
+                ).toFixed(0)}:F>**.
+Please note that this command should only be used if you plan on going AFK. Once you speak, the timer will reset to **${
+                    CONFIG.bot.blockTimeout
+                } minutes** after your last message.`,
             });
-            await notification.delete({ timeout: 30000 })
-                .catch(() => {}); // No need to worry about this.
+            await notification.delete({ timeout: 30000 });
         }
 
         return null;

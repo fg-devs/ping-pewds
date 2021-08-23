@@ -1,6 +1,6 @@
+import { PoolClient } from 'pg';
 import Table from '../models/Table';
 import { Parsed, Results, ValidationState } from '../types';
-import { PoolClient } from 'pg';
 import DatabaseManager from '../database';
 import { InsertError, SelectError, UpdateError } from '../errors';
 
@@ -9,6 +9,7 @@ export default class BlockedUsersTable extends Table<
     Parsed.BlockedUser
 > {
     protected readonly accepted: Array<keyof Parsed.BlockedUser>;
+
     protected readonly nullables: Array<keyof Parsed.BlockedUser>;
 
     protected readonly mappedKeys: {
@@ -31,10 +32,12 @@ export default class BlockedUsersTable extends Table<
      * @param ids user ids to have records created for
      */
     public async initializeUsers(ids: number | number[]): Promise<boolean>;
+
     public async initializeUsers(
         connection: PoolClient,
         ids: number | number[]
     ): Promise<boolean>;
+
     public async initializeUsers(
         connection?: PoolClient | number | number[],
         ids?: number | number[]
@@ -65,11 +68,13 @@ export default class BlockedUsersTable extends Table<
      * @param timestamp the timestamp to be updated to
      */
     public async updateLastMessage(id: number, timestamp: number): Promise<boolean>;
+
     public async updateLastMessage(
         connection: PoolClient,
         id: number,
         timestamp: number
     ): Promise<boolean>;
+
     public async updateLastMessage(
         connection: PoolClient | number | undefined,
         id: number,
@@ -97,7 +102,9 @@ export default class BlockedUsersTable extends Table<
      * @param id user id to get the timestamp from
      */
     public async getLastMessage(id: number): Promise<Date>;
+
     public async getLastMessage(connection: PoolClient, id: number): Promise<Date>;
+
     public async getLastMessage(
         connection: PoolClient | number | undefined,
         id?: number
@@ -130,10 +137,12 @@ export default class BlockedUsersTable extends Table<
     public async getById(
         ids: number | number[]
     ): Promise<Array<Parsed.BlockedUser | null>>;
+
     public async getById(
         connection: PoolClient,
         ids: number | number[]
     ): Promise<Array<Parsed.BlockedUser | null>>;
+
     public async getById(
         connection: PoolClient | number | number[] | undefined,
         ids?: number | number[]
@@ -201,7 +210,7 @@ export default class BlockedUsersTable extends Table<
         if (data) {
             return {
                 id: data.user_id,
-                lastMessage: Number.parseInt(`${data.user_last_message}`),
+                lastMessage: Number.parseInt(`${data.user_last_message}`, 10),
             };
         }
         return null;

@@ -9,6 +9,7 @@ export default class Config extends Conf {
     private static CONFIG_LOCATION = process.env.CONFIG || './config.yml';
 
     public readonly bot: BotConfig;
+
     public readonly database: DatabaseConfig;
 
     constructor() {
@@ -21,7 +22,7 @@ export default class Config extends Conf {
     public static getConfig(): Config {
         if (!fs.existsSync(Config.CONFIG_LOCATION))
             throw new Error(`Config file at ${Config.CONFIG_LOCATION} does not exist.`);
-        let file = fs.readFileSync(Config.CONFIG_LOCATION, 'utf-8');
+        const file = fs.readFileSync(Config.CONFIG_LOCATION, 'utf-8');
         const casted = yaml.load(file) as Config;
 
         validate<Config>(new Config(), casted);

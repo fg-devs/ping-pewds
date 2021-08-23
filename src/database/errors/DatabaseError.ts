@@ -1,7 +1,10 @@
 export default class DatabaseError extends Error {
     static DELETE_ERROR = 'Delete Error';
+
     static INSERT_ERROR = 'Insert Error';
+
     static UPDATE_ERROR = 'Update Error';
+
     static SELECT_ERROR = 'Select Error';
 
     readonly errorMessage?: string;

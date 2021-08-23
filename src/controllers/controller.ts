@@ -4,9 +4,8 @@
  * @property {string}  name Name of the controller (for logging purposes)
  * @property {Bot} bot bot to get a logger instance
  */
-import Bot from '../Bot';
-import getLogger from '../utils/logger';
 import winston from 'winston';
+import Bot from '../Bot';
 
 export default class Controller {
     private readonly name: string;
@@ -21,7 +20,7 @@ export default class Controller {
     /**
      * Used on *most* promise catch statements to allow the bot to continue running if something fails
      */
-    protected handleError = (err: Error) => {
+    protected handleError = (err: Error): null => {
         this.getLogger().error(err);
         return null;
     };

@@ -1,9 +1,8 @@
-import {Pool, PoolConfig, DatabaseError, PoolClient} from 'pg';
+import { Pool, PoolConfig, DatabaseError, PoolClient } from 'pg';
+import winston from 'winston';
 import Table from './models/Table';
-import getLogger from '../utils/logger';
 import BlockedUsersTable from './tables/BlockedUsers';
 import Bot from '../Bot';
-import winston from 'winston';
 
 type CustomizedConfig = PoolConfig & {
     schema: string;
@@ -13,7 +12,9 @@ export default class DatabaseManager {
     public readonly pool: Pool;
 
     private readonly schema: string;
+
     private readonly escapedSchema: string;
+
     private readonly username?: string;
 
     private readonly logger: winston.Logger;
@@ -60,7 +61,7 @@ export default class DatabaseManager {
      *
      * Does not catch any errors, so the bot crashes if initialization fails
      */
-    public async init() {
+    public async init(): Promise<void> {
         const connection = await this.acquire();
 
         await connection.query(`CREATE SCHEMA IF NOT EXISTS ${this.schema};`);
@@ -96,7 +97,7 @@ export default class DatabaseManager {
             .filter((table) => typeof table !== 'undefined') as Table[];
     }
 
-    public static getLogger(section?: string) {
-        return Bot.getLogger(`Database${!!section && '::' + section}`);
+    public static getLogger(section?: string): winston.Logger {
+        return Bot.getLogger(`Database${!!section && `::${section}`}`);
     }
 }

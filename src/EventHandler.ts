@@ -1,6 +1,6 @@
 import { Message } from 'discord.js';
+import winston from 'winston';
 import Bot from './Bot';
-import winston from "winston";
 
 export default class EventHandler {
     private readonly bot: Bot;
@@ -24,7 +24,8 @@ export default class EventHandler {
         if (await pingableController.handleMessage(message)) return;
 
         const pingController = this.bot.getPingController();
-        if (await pingController.handleMessage(message)) return;
+        await pingController.handleMessage(message);
+        // if (await pingController.handleMessage(message)) return;
     }
 
     private static getLogger(): winston.Logger {

@@ -14,7 +14,7 @@ describe('Start standard DatabaseManager', async function () {
             port: CONFIG.database.port,
             user: CONFIG.database.user,
             database: CONFIG.database.database,
-            schema: CONFIG.database.schema + '_test',
+            schema: `${CONFIG.database.schema}_test`,
             password: CONFIG.database.pass,
             max: CONFIG.database.connections,
         });

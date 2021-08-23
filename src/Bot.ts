@@ -1,4 +1,5 @@
 import { CommandoClient, CommandoMessage } from 'discord.js-commando';
+import winston from 'winston';
 import { CONFIG } from './globals';
 import getLogger from './utils/logger';
 import IssueHandler from './IssueHandler';
@@ -8,7 +9,6 @@ import DatabaseManager from './database/database';
 import { PingController } from './controllers/PingController';
 import ExtendTimeout from './commands/pingable/extendtimeout';
 import ClearTimeout from './commands/pingable/cleartimeout';
-import winston from 'winston';
 
 export default class Bot extends CommandoClient {
     private readonly events: EventHandler;

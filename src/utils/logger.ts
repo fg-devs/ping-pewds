@@ -1,4 +1,5 @@
 import winston, { format } from 'winston';
+
 const { label, timestamp, combine, prettyPrint } = format;
 type Meta = {
     [s: string]: string | boolean | number | Meta | undefined;

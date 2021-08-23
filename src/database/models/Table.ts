@@ -1,6 +1,7 @@
+import { PoolClient, QueryResult } from 'pg';
+import winston from 'winston';
 import DatabaseManager from '../database';
 import { DatabaseError } from '../errors';
-import { PoolClient, QueryResult } from 'pg';
 import { DBParsed, DBTable, ValidationState, ValueObject } from '../types';
 import getLogger from '../../utils/logger';
 
@@ -10,11 +11,13 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
     protected readonly manager: DatabaseManager;
 
     protected readonly name: string;
+
     protected readonly full: string;
 
     protected state: ValidationState;
 
     protected readonly accepted: Array<keyof Parsed>;
+
     protected readonly nullables: Array<keyof Parsed>;
 
     protected readonly mappedKeys: {
@@ -89,11 +92,13 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
         statement: string,
         values?: ValueObject
     ): Promise<QueryResult<T>>;
+
     public async query<T = any>(
         connection: PoolClient | undefined,
         statement: string,
         values?: ValueObject
     ): Promise<QueryResult<T>>;
+
     public async query<T = any>(
         connection: PoolClient | string | undefined,
         statement?: string | ValueObject,
@@ -147,7 +152,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
     /**
      * gets the fully qualified table name. ("schema"."table_name")
      */
-    public getFullName() {
+    public getFullName(): string {
         return this.full;
     }
 
@@ -155,7 +160,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
      * Goes through validation steps to ensure that the table exists and handles migrations
      * @param connection
      */
-    public async validate(connection?: PoolClient) {
+    public async validate(connection?: PoolClient): Promise<void> {
         const exists = await this.tableExists(connection);
         if (exists) {
             switch (this.state) {
@@ -168,7 +173,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
                     logger.verbose(`${this.full} required additional initialization.`);
                     await this.validate(connection);
                     break;
-                case ValidationState.INVALID:
+                default:
                     throw new DatabaseError(
                         'Initialization Failed',
                         'Database could not be validated successfully'
@@ -210,7 +215,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
         throw new Error(`Table init for ${this.full} has not been implemented.`);
     }
 
-    protected getLogger() {
+    protected getLogger(): winston.Logger {
         return DatabaseManager.getLogger(`Table::${this.name}`);
     }
 }

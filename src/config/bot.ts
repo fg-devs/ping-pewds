@@ -2,13 +2,21 @@ import Conf from './conf';
 
 export default class BotConfig extends Conf {
     public readonly token: string;
+
     public readonly prefix: string;
+
     public readonly owners: string[];
+
     public readonly block: string[];
+
     public readonly blockTimeout: number;
+
     public readonly excludedChannels: string[];
+
     public readonly notifyTimeout: number;
+
     public readonly notifyRoles: string[];
+
     public readonly notifyChannels: string[];
 
     constructor() {

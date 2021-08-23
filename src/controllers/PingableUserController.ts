@@ -1,12 +1,18 @@
+import { Message as DiscordMessage, TextChannel } from 'discord.js';
 import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
-import { Message as DiscordMessage, TextChannel } from 'discord.js';
 import Timeout = NodeJS.Timeout;
 
 type Message = DiscordMessage & {
     command?: never | null;
 };
+
+type PingUserCache = {
+    [s: string]: number;
+};
+
+type AnyCB = (args?: unknown) => unknown;
 
 export class PingableUserController extends Controller {
     private updateQueue: {
@@ -30,7 +36,7 @@ export class PingableUserController extends Controller {
         const db = this.bot.getDatabase();
         const ids = CONFIG.bot.block
             .filter((id) => id.match(/^\d+$/))
-            .map((id) => Number.parseInt(id));
+            .map((id) => Number.parseInt(id, 10));
 
         await db.blockedUsers.initializeUsers(ids);
 
@@ -45,11 +51,8 @@ export class PingableUserController extends Controller {
      * extend the timeout for the user and notify notifiable roles
      */
     public async handleMessage(message: Message): Promise<boolean> {
-        if (
-            CONFIG.bot.block.indexOf(message.author.id) < 0 &&
-            message.command !== null
-        ) {
-            return false
+        if (CONFIG.bot.block.indexOf(message.author.id) < 0 && message.command !== null) {
+            return false;
         }
 
         const now = Date.now();
@@ -57,9 +60,7 @@ export class PingableUserController extends Controller {
 
         await this.notify(message);
         this.getLogger().verbose(
-            `message sent by '${
-                message.author.username
-            }' at ${now}... Waiting until ${
+            `message sent by '${message.author.username}' at ${now}... Waiting until ${
                 now + CONFIG.bot.blockTimeout * 1000 * 60
             }`
         );
@@ -73,7 +74,10 @@ export class PingableUserController extends Controller {
      * @param message the message that was sent by the user that should be managed
      * @param timeout the time, in seconds, for how long the user can be pinged
      */
-    public async notify(message: Message, timeout = CONFIG.bot.notifyTimeout) {
+    public async notify(
+        message: Message,
+        timeout = CONFIG.bot.notifyTimeout
+    ): Promise<void> {
         const authorId = message.author.id;
         let resetting = false;
         if (this.notifyTimeouts[authorId]) {
@@ -131,7 +135,7 @@ export class PingableUserController extends Controller {
         timestamp: number,
         timeout = CONFIG.bot.blockTimeout,
         immediate = false
-    ) {
+    ): Promise<boolean> {
         if (timeout < 0) timeout = 0;
         if (timeout === 0) this.clearTimeout(snowflake);
         this.usersLastMessage[snowflake] = timestamp + timeout * 1000 * 60;
@@ -139,17 +143,16 @@ export class PingableUserController extends Controller {
             this.bot
                 .getDatabase()
                 .blockedUsers.updateLastMessage(
-                    Number.parseInt(snowflake),
+                    Number.parseInt(snowflake, 10),
                     timestamp + timeout * 1000 * 60
                 )
                 .catch(this.handleError);
         if (immediate) {
             this.clearQueue(snowflake);
             return (await action()) || false;
-        } else {
-            this.queueUpdate(snowflake, action);
-            return true;
         }
+        this.queueUpdate(snowflake, action);
+        return true;
     }
 
     /**
@@ -183,7 +186,7 @@ export class PingableUserController extends Controller {
      * @param cb
      * @private
      */
-    private queueUpdate(snowflake: string, cb: Function) {
+    private queueUpdate(snowflake: string, cb: AnyCB): void {
         if (this.updateQueue[snowflake]) clearTimeout(this.updateQueue[snowflake]);
 
         this.updateQueue[snowflake] = setTimeout(() => {
@@ -192,7 +195,7 @@ export class PingableUserController extends Controller {
         }, 5000);
     }
 
-    public getCache() {
+    public getCache(): PingUserCache {
         return { ...this.usersLastMessage };
     }
 }
