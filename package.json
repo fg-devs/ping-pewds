@@ -18,7 +18,9 @@
     "test-database": "mocha -r ts-node/register \"src/database/tests/**/runner.test.ts\" --watch --watch-files **/*.ts",
     "build": "tsc",
     "pm2": "pm2 start ecosystem.config.js",
-    "prettier": "prettier --write \"./src/**/*.{ts,tsx}\""
+    "prettier": "prettier --write \"./src/**/*.{ts,tsx}\"",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx src/",
+    "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx src/ --fix"
   },
   "dependencies": {
     "async-mutex": "^0.3.1",
@@ -33,9 +35,14 @@
     "@types/mocha": "^8.2.1",
     "@types/node": "^15.12.4",
     "@types/js-yaml": "^4.0.1",
-    "@typescript-eslint/parser": "^4.28.0",
-    "@typescript-eslint/eslint-plugin": "^4.28.0",
+    "@typescript-eslint/parser": "^4.29.2",
+    "@typescript-eslint/eslint-plugin": "^4.29.2",
     "@types/pg": "^8.6.1",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.24.1",
+    "eslint-plugin-prettier": "^3.4.1",
+    "eslint": "^7.32.0",
     "chai": "^4.3.0",
     "mocha": "^9.0.2",
     "nodemon": "^2.0.7",
