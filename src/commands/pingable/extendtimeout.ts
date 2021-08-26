@@ -36,7 +36,7 @@ export default class ExtendTimeout extends Command {
      * @param message
      * @param ownerOverride
      */
-    hasPermission(message: CommandoMessage, ownerOverride?: boolean): boolean {
+    public hasPermission(message: CommandoMessage, ownerOverride?: boolean): boolean {
         return CONFIG.bot.block.indexOf(message.author.id) >= 0 || ownerOverride === true;
     }
 

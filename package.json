@@ -19,8 +19,8 @@
     "build": "tsc",
     "pm2": "pm2 start ecosystem.config.js",
     "prettier": "prettier --write \"./src/**/*.{ts,tsx}\"",
-    "lint": "eslint --ext .js,.jsx,.ts,.tsx src/",
-    "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx src/ --fix"
+    "lint": "eslint --ext .ts src/",
+    "lint:fix": "eslint --ext .ts src/ --fix"
   },
   "dependencies": {
     "async-mutex": "^0.3.1",
