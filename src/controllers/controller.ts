@@ -5,7 +5,7 @@
  * @property {Bot} bot bot to get a logger instance
  */
 import Bot from '../Bot';
-import {BotLogger} from "../utils/logger";
+import { BotLogger } from '../utils/logger';
 
 class Controller {
     private readonly name: string;

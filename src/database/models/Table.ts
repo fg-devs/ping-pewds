@@ -2,7 +2,7 @@ import { PoolClient, QueryResult } from 'pg';
 import DatabaseManager from '../database';
 import { DatabaseError } from '../errors';
 import { DBParsed, DBTable, ValidationState, ValueObject } from '../types';
-import {BotLogger} from '../../utils/logger';
+import { BotLogger } from '../../utils/logger';
 
 export default class Table<Row = DBTable, Parsed = DBParsed> {
     protected readonly manager: DatabaseManager;
@@ -167,7 +167,9 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
                     break;
                 case ValidationState.HAS_ADDITIONAL_INIT:
                     this.state = await this.init(connection);
-                    this.getLogger().debug(`${this.full} required additional initialization.`);
+                    this.getLogger().debug(
+                        `${this.full} required additional initialization.`
+                    );
                     await this.validate(connection);
                     break;
                 default:

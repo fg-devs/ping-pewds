@@ -2,8 +2,8 @@ import { Pool, PoolConfig, DatabaseError, PoolClient } from 'pg';
 import Table from './models/Table';
 import BlockedUsersTable from './tables/BlockedUsers';
 import Bot from '../Bot';
-import {BotLogger} from "../utils/logger";
-import PunishmentsTable from "./tables/Punishments";
+import { BotLogger } from '../utils/logger';
+import PunishmentsTable from './tables/Punishments';
 
 type CustomizedConfig = PoolConfig & {
     schema: string;

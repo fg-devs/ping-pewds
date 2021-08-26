@@ -1,6 +1,6 @@
-import {SapphireClient} from "@sapphire/framework";
+import { SapphireClient } from '@sapphire/framework';
 import { CONFIG } from './globals';
-import {BotLogger} from './utils/logger';
+import { BotLogger } from './utils/logger';
 import IssueHandler from './IssueHandler';
 import EventHandler from './EventHandler';
 import { PingableUserController } from './controllers/PingableUserController';
@@ -8,7 +8,7 @@ import DatabaseManager from './database/database';
 import { PingController } from './controllers/PingController';
 import ExtendTimeout from './commands/pingable/extendtimeout';
 import ClearTimeout from './commands/pingable/cleartimeout';
-import PunishmentController from "./controllers/PunishmentController";
+import PunishmentController from './controllers/PunishmentController';
 
 class Bot extends SapphireClient {
     private readonly events: EventHandler;
@@ -30,9 +30,9 @@ class Bot extends SapphireClient {
             defaultPrefix: CONFIG.bot.prefix,
             id: CONFIG.bot.token,
             logger: {
-                instance: BotLogger.getInstance()
-            }
-        })
+                instance: BotLogger.getInstance(),
+            },
+        });
 
         this.synchronizeTimeout = 1000 * 60; // 1 minute
 
@@ -52,7 +52,6 @@ class Bot extends SapphireClient {
 
         this.events = new EventHandler(this);
         this.registerEvents();
-
     }
 
     /**
@@ -64,10 +63,12 @@ class Bot extends SapphireClient {
         await this.punishmentController.synchronize();
         await this.pingableUserController.init();
         this.synchronizeLoop = setInterval(
-            () => this.punishmentController.synchronize()
-                .catch((err) => Bot.getLogger('synchronization').error(err)),
+            () =>
+                this.punishmentController
+                    .synchronize()
+                    .catch((err) => Bot.getLogger('synchronization').error(err)),
             this.synchronizeTimeout
-        )
+        );
     }
 
     /**
@@ -101,8 +102,7 @@ class Bot extends SapphireClient {
     }
 
     public static getLogger(section: string): BotLogger {
-        return BotLogger.getInstance()
-            .getTitledInstance(section);
+        return BotLogger.getInstance().getTitledInstance(section);
     }
 }
 

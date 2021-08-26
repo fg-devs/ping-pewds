@@ -1,8 +1,8 @@
 import { Message } from 'discord.js';
-import {Command, CommandErrorPayload, CommandRunPayload} from "@sapphire/framework";
+import { Command, CommandErrorPayload, CommandRunPayload } from '@sapphire/framework';
 import Bot from './Bot';
 import LogUtil from './utils/LogUtil';
-import {BotLogger} from "./utils/logger";
+import { BotLogger } from './utils/logger';
 
 class IssueHandler {
     /**
@@ -34,12 +34,12 @@ ${LogUtil.breakDownErr(err)}`;
     public async onCommandRun(
         msg: Message,
         cmd: Command,
-        payload: CommandRunPayload,
+        payload: CommandRunPayload
     ): Promise<void> {
         const log = this.getLogger(payload);
-        const message = `${msg.author.tag} executed this command\n${await LogUtil.breakDownMsg(
-            payload
-        )}`;
+        const message = `${
+            msg.author.tag
+        } executed this command\n${await LogUtil.breakDownMsg(payload)}`;
 
         log.debug(message);
     }

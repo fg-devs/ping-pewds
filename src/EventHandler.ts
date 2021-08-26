@@ -1,6 +1,6 @@
 import { Message } from 'discord.js';
 import Bot from './Bot';
-import {BotLogger} from "./utils/logger";
+import { BotLogger } from './utils/logger';
 
 class EventHandler {
     private readonly bot: Bot;

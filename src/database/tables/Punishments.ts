@@ -1,28 +1,32 @@
-import Table from "../models/Table";
-import {Parsed, Results, ValidationState} from "../types";
-import DatabaseManager from "../database";
-import {PoolClient} from "pg";
-import {InsertError, SelectError, UpdateError} from "../errors";
+import { PoolClient } from 'pg';
+import Table from '../models/Table';
+import { Parsed, Results, ValidationState } from '../types';
+import DatabaseManager from '../database';
+import { InsertError, SelectError, UpdateError } from '../errors';
 
 type PunishmentObject = {
     userId: number | string;
     endsAt: number | boolean;
     expiresAt?: number;
     active?: boolean;
-}
+};
 
-export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed.Punishment> {
+export default class PunishmentsTable extends Table<
+    Results.DBPunishment,
+    Parsed.Punishment
+> {
     protected readonly accepted: Array<keyof Parsed.Punishment>;
+
     protected readonly nullables: Array<keyof Parsed.Punishment>;
 
     protected readonly mappedKeys: {
         [s in keyof Parsed.Punishment]: keyof Results.DBPunishment;
-    }
+    };
 
     constructor(manager: DatabaseManager) {
         super(manager, 'punishments');
 
-        this.nullables = ['expiresAt']
+        this.nullables = ['expiresAt'];
         this.accepted = ['userId', 'endsAt', 'active', 'expiresAt'];
 
         this.mappedKeys = {
@@ -31,31 +35,44 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
             active: 'punishment_active',
             endsAt: 'punishment_ends_at',
             expiresAt: 'punishment_expires_at',
-            createdAt: 'punishment_created_at'
-        }
+            createdAt: 'punishment_created_at',
+        };
     }
 
-    public async create(punishment: PunishmentObject): Promise<boolean>
-    public async create(connection: PoolClient, punishment: PunishmentObject): Promise<boolean>
-    public async create(connection: PoolClient | PunishmentObject | undefined, punishment?: PunishmentObject): Promise<boolean> {
-        if (typeof (connection as PunishmentObject).userId === 'number'
-            || typeof (connection as PunishmentObject).userId === 'string') {
+    public async create(punishment: PunishmentObject): Promise<boolean>;
+
+    public async create(
+        connection: PoolClient,
+        punishment: PunishmentObject
+    ): Promise<boolean>;
+
+    public async create(
+        connection: PoolClient | PunishmentObject | undefined,
+        punishment?: PunishmentObject
+    ): Promise<boolean> {
+        if (
+            typeof (connection as PunishmentObject).userId === 'number' ||
+            typeof (connection as PunishmentObject).userId === 'string'
+        ) {
             punishment = connection as PunishmentObject;
             connection = undefined;
         }
 
-        if (typeof punishment?.userId !== 'number' && typeof punishment?.userId !== 'string') {
-            throw new InsertError('punishment object is not valid')
+        if (
+            typeof punishment?.userId !== 'number' &&
+            typeof punishment?.userId !== 'string'
+        ) {
+            throw new InsertError('punishment object is not valid');
         }
 
         const values = [
             punishment.userId,
             // Math.round(punishment.endsAt / 1000),
-        ]
+        ];
         const fields = [
             this.mappedKeys.userId,
             // this.mappedKeys.endsAt
-        ]
+        ];
 
         if (typeof punishment.endsAt === 'number') {
             values.push(Math.round(punishment.endsAt / 1000));
@@ -74,7 +91,9 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
 
         const response = await this.query(
             connection as PoolClient | undefined,
-            `INSERT INTO ${this.full} (${fields.join(', ')}) VALUES (${values.map((_, idx) => '$' + (idx + 1)).join(', ')});`,
+            `INSERT INTO ${this.full} (${fields.join(', ')}) VALUES (${values
+                .map((_, idx) => `$${idx + 1}`)
+                .join(', ')});`,
             values
         ).catch((err) => new InsertError(err));
 
@@ -83,20 +102,52 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
         return response.rowCount > 0;
     }
 
-    public async getByUserId(userId: string | number): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(userId: string | number, includeEnded: boolean): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(userId: string | number, includeEnded: boolean, includeExpired: boolean): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(connection: PoolClient, userId: string | number): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(connection: PoolClient, userId: string | number, includeEnded: boolean): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(connection: PoolClient, userId: string | number, includeEnded: boolean, includeExpired: boolean): Promise<Array<Parsed.Punishment | null>>
-    public async getByUserId(connection: PoolClient | string | number | undefined, userId?: string | number | boolean, includeEnded = false, includeExpired = false): Promise<Array<Parsed.Punishment | null>> {
+    public async getByUserId(
+        userId: string | number
+    ): Promise<Array<Parsed.Punishment | null>>;
+
+    public async getByUserId(
+        userId: string | number,
+        includeEnded: boolean
+    ): Promise<Array<Parsed.Punishment | null>>;
+
+    public async getByUserId(
+        userId: string | number,
+        includeEnded: boolean,
+        includeExpired: boolean
+    ): Promise<Array<Parsed.Punishment | null>>;
+
+    public async getByUserId(
+        connection: PoolClient,
+        userId: string | number
+    ): Promise<Array<Parsed.Punishment | null>>;
+
+    public async getByUserId(
+        connection: PoolClient,
+        userId: string | number,
+        includeEnded: boolean
+    ): Promise<Array<Parsed.Punishment | null>>;
+
+    public async getByUserId(
+        connection: PoolClient,
+        userId: string | number,
+        includeEnded: boolean,
+        includeExpired: boolean
+    ): Promise<Array<Parsed.Punishment | null>>;
+
+    public async getByUserId(
+        connection: PoolClient | string | number | undefined,
+        userId?: string | number | boolean,
+        includeEnded = false,
+        includeExpired = false
+    ): Promise<Array<Parsed.Punishment | null>> {
         if (typeof connection === 'string' || typeof connection === 'number') {
             includeExpired = includeEnded || false;
-            includeEnded = userId as boolean || false;
+            includeEnded = (userId as boolean) || false;
             userId = connection;
             connection = undefined;
         }
-        
+
         if (typeof userId !== 'number' && typeof userId !== 'string')
             throw new SelectError('user id is not a number');
 
@@ -108,22 +159,27 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
         if (!includeExpired) {
             filter += `AND (${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.expiresAt} IS NULL) `;
         }
-        
+
         const response = await this.query<Results.DBPunishment>(
             connection as PoolClient | undefined,
             `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.userId} = $1 ${filter};`,
-            [ userId ]
+            [userId]
         ).catch((err) => new SelectError(err));
-        
+
         if (response instanceof Error) throw response;
-        
+
         return response.rows.map(this.parse);
     }
 
-    public async getAllLatest(): Promise<Array<Parsed.PunishmentWithCount | null>>
-    public async getAllLatest(connection: PoolClient): Promise<Array<Parsed.PunishmentWithCount | null>>
-    public async getAllLatest(connection?: PoolClient): Promise<Array<Parsed.PunishmentWithCount | null>> {
+    public async getAllLatest(): Promise<Array<Parsed.PunishmentWithCount | null>>;
 
+    public async getAllLatest(
+        connection: PoolClient
+    ): Promise<Array<Parsed.PunishmentWithCount | null>>;
+
+    public async getAllLatest(
+        connection?: PoolClient
+    ): Promise<Array<Parsed.PunishmentWithCount | null>> {
         const response = await this.query<Results.DBPunishmentWithCount>(
             connection,
             `SELECT DISTINCT ON(${this.mappedKeys.userId}) *, (
@@ -136,7 +192,7 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
                 -- AND (a.${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR a.${this.mappedKeys.endsAt} IS NULL)
                 AND a.${this.mappedKeys.active} = 1
                 ORDER BY ${this.mappedKeys.userId}, ${this.mappedKeys.id} DESC;`
-        ).catch((err) => new SelectError(err))
+        ).catch((err) => new SelectError(err));
 
         if (response instanceof Error) throw response;
 
@@ -145,22 +201,27 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
             if (parsed) {
                 return {
                     ...parsed,
-                    count: Number.parseInt(item.count)
+                    count: Number.parseInt(item.count, 10),
                 };
             }
             return null;
         });
     }
 
-    public async getAllActive(): Promise<Array<Parsed.PunishmentWithCount | null>>
-    public async getAllActive(connection: PoolClient): Promise<Array<Parsed.PunishmentWithCount | null>>
-    public async getAllActive(connection?: PoolClient): Promise<Array<Parsed.PunishmentWithCount | null>> {
+    public async getAllActive(): Promise<Array<Parsed.PunishmentWithCount | null>>;
 
+    public async getAllActive(
+        connection: PoolClient
+    ): Promise<Array<Parsed.PunishmentWithCount | null>>;
+
+    public async getAllActive(
+        connection?: PoolClient
+    ): Promise<Array<Parsed.PunishmentWithCount | null>> {
         // original query that didn't have the total number of active punishments
         const sql1 = `SELECT DISTINCT ON(${this.mappedKeys.userId}) * FROM ${this.full} WHERE
                 (${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.endsAt} IS NULL)
                 AND (${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.expiresAt} IS NULL)
-            ORDER BY ${this.mappedKeys.userId}, ${this.mappedKeys.id} DESC;`
+            ORDER BY ${this.mappedKeys.userId}, ${this.mappedKeys.id} DESC;`;
 
         const response = await this.query<Results.DBPunishmentWithCount>(
             connection,
@@ -172,7 +233,7 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
                 ) FROM ${this.full} a WHERE
                     (a.${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR a.${this.mappedKeys.endsAt} IS NULL)
                     AND (a.${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR a.${this.mappedKeys.expiresAt} IS NULL);`
-        ).catch((err) => new SelectError(err))
+        ).catch((err) => new SelectError(err));
 
         if (response instanceof Error) throw response;
 
@@ -181,16 +242,26 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
             if (parsed) {
                 return {
                     ...parsed,
-                    count: Number.parseInt(item.count)
+                    count: Number.parseInt(item.count, 10),
                 };
             }
             return null;
         });
     }
 
-    public async setActive(id: string | number, active: boolean): Promise<boolean>
-    public async setActive(connection: PoolClient, id: string | number, active: boolean): Promise<boolean>
-    public async setActive(connection: PoolClient | string | number | undefined, id: string | number | boolean, active?: boolean): Promise<boolean> {
+    public async setActive(id: string | number, active: boolean): Promise<boolean>;
+
+    public async setActive(
+        connection: PoolClient,
+        id: string | number,
+        active: boolean
+    ): Promise<boolean>;
+
+    public async setActive(
+        connection: PoolClient | string | number | undefined,
+        id: string | number | boolean,
+        active?: boolean
+    ): Promise<boolean> {
         if (typeof connection === 'string' || typeof connection === 'number') {
             active = id as boolean;
             id = connection;
@@ -235,7 +306,7 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
                 connection,
                 `CREATE INDEX ${this.name}_ends_at_index
                     ON ${this.full} (${this.mappedKeys.endsAt});`
-            )
+            );
 
             await this.query(
                 connection,
@@ -255,10 +326,14 @@ export default class PunishmentsTable extends Table<Results.DBPunishment, Parsed
                 id: data.punishment_id,
                 active: data.punishment_active === 1,
                 userId: data.punishment_user_id,
-                endsAt: data.punishment_ends_at ? new Date(data.punishment_ends_at * 1000) : null,
-                expiresAt: data.punishment_expires_at ? new Date(data.punishment_expires_at * 1000) : null,
-                createdAt: new Date(data.punishment_created_at * 1000)
-            }
+                endsAt: data.punishment_ends_at
+                    ? new Date(data.punishment_ends_at * 1000)
+                    : null,
+                expiresAt: data.punishment_expires_at
+                    ? new Date(data.punishment_expires_at * 1000)
+                    : null,
+                createdAt: new Date(data.punishment_created_at * 1000),
+            };
         }
         return null;
     }

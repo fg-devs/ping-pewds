@@ -21,7 +21,7 @@ class BotConfig extends Conf {
 
     public readonly notifyChannels: string[];
 
-    public readonly lenientRoles: string[]
+    public readonly lenientRoles: string[];
 
     constructor() {
         super('bot');

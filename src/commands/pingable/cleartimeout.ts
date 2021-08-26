@@ -1,7 +1,7 @@
-import { Command, PieceContext } from "@sapphire/framework";
+import { Command, PieceContext } from '@sapphire/framework';
+import { Message } from 'discord.js';
 import Bot from '../../Bot';
 import { CONFIG } from '../../globals';
-import {Message} from "discord.js";
 
 export default class ClearTimeout extends Command {
     constructor(ctx: PieceContext) {
@@ -26,8 +26,7 @@ export default class ClearTimeout extends Command {
      * @param msg
      */
     public async run(msg: Message): Promise<null> {
-        if (!this.hasPermission(msg))
-            return null;
+        if (!this.hasPermission(msg)) return null;
         const author = msg.author.id;
         const client = this.context.client as Bot;
 

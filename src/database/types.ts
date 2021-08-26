@@ -19,11 +19,11 @@ export namespace Results {
         punishment_ends_at: number;
         punishment_expires_at: number | null;
         punishment_created_at: number;
-    }
+    };
 
     export type DBPunishmentWithCount = DBPunishment & {
         count: string;
-    }
+    };
 }
 
 export namespace Parsed {
@@ -41,15 +41,13 @@ export namespace Parsed {
     };
     export type PunishmentWithCount = Punishment & {
         count: number;
-    }
+    };
 }
 
 export type ValueObject = Array<string | number | boolean>;
 
-export type DBTable = Results.DBBlockedUser
-    | Results.DBPunishment
+export type DBTable = Results.DBBlockedUser | Results.DBPunishment;
 // | Results.NextTable
 
-export type DBParsed = Parsed.BlockedUser
-    | Parsed.Punishment
+export type DBParsed = Parsed.BlockedUser | Parsed.Punishment;
 // | Parsed.NextTable

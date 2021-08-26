@@ -1,7 +1,7 @@
-import { Command, PieceContext, Args } from "@sapphire/framework";
+import { Command, PieceContext, Args } from '@sapphire/framework';
+import { Message } from 'discord.js';
 import Bot from '../../Bot';
 import { CONFIG } from '../../globals';
-import {Message} from "discord.js";
 
 export default class ExtendTimeout extends Command {
     constructor(ctx: PieceContext) {
@@ -23,12 +23,12 @@ export default class ExtendTimeout extends Command {
     private async validateArgs(args: Args) {
         try {
             return {
-                timeout: await args.rest('number')
-            }
+                timeout: await args.rest('number'),
+            };
         } catch (_) {
             return {
-                timeout: 15
-            }
+                timeout: 15,
+            };
         }
     }
 
@@ -38,8 +38,7 @@ export default class ExtendTimeout extends Command {
      * @param args
      */
     public async run(msg: Message, args: Args): Promise<null> {
-        if (!this.hasPermission(msg))
-            return null;
+        if (!this.hasPermission(msg)) return null;
 
         const { timeout } = await this.validateArgs(args); // await args.rest('number');
 

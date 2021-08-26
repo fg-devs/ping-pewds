@@ -1,4 +1,4 @@
-import {CommandRunPayload} from "@sapphire/framework";
+import { CommandRunPayload } from '@sapphire/framework';
 
 class LogUtil {
     /**
@@ -23,4 +23,3 @@ class LogUtil {
 }
 
 export default LogUtil;
-
