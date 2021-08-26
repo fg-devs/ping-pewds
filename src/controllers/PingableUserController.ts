@@ -100,25 +100,25 @@ export class PingableUserController extends Controller {
 
         if (resetting) return;
 
-        await Promise.all(
-            CONFIG.bot.notifyChannels.map(async (channelId) => {
-                const channel = message.guild?.channels.resolve(channelId) as TextChannel;
-                if (channel && channel.type === 'text') {
-                    const notifiedRoles = CONFIG.bot.notifyRoles.map(
-                        (roleId) => `<@&${roleId}>`
-                    );
-                    const link = `https://discord.com/channels/${message.guild?.id}/${message.channel.id}/${message.id}`;
-                    await channel
-                        .send({
-                            content: `${notifiedRoles.join(
-                                ', '
-                            )}, <@${authorId}> has made an appearance! I'll notify you once some time has past since they have sent a message.\n${link}`,
-                            allowedMentions: { roles: CONFIG.bot.notifyRoles },
-                        })
-                        .catch(this.handleError);
-                }
-            })
-        );
+        const notifyChannels = CONFIG.bot.notifyChannels.map(async (channelId) => {
+            const channel = message.guild?.channels.resolve(channelId) as TextChannel;
+            if (channel && channel.type === 'text') {
+                const notifiedRoles = CONFIG.bot.notifyRoles.map(
+                    (roleId) => `<@&${roleId}>`
+                );
+                const link = `https://discord.com/channels/${message.guild?.id}/${message.channel.id}/${message.id}`;
+                await channel
+                    .send({
+                        content: `${notifiedRoles.join(
+                            ', '
+                        )}, <@${authorId}> has made an appearance! I'll notify you once some time has past since they have sent a message.\n${link}`,
+                        allowedMentions: { roles: CONFIG.bot.notifyRoles },
+                    })
+                    .catch(this.handleError);
+            }
+        });
+
+        await Promise.all(notifyChannels);
     }
 
     /**
