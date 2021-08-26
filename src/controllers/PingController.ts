@@ -50,7 +50,10 @@ export class PingController extends Controller {
                 })
                 .catch(this.handleError);
 
-            // TODO handle punishments
+                // TODO handle punishments
+                const punisher = this.bot.getPunishmentController();
+                await punisher.punish(message, pingedUsers);
+                // punisher.get
 
             if (notification) {
                 await notification.delete({ timeout: 10000 }).catch(this.handleError);

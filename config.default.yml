@@ -1,6 +1,7 @@
 bot:
   token: 'BotToken'
   prefix: '!'
+  guild: ''             # the guild that the bot will be attached to
   owners: ['id1', 'id2']
   blockTimeout: 10      # delay in minutes to stop blocking pings if a specific user has spoken
   block: []             # User IDs that will the bot will listen for mentions of
@@ -8,6 +9,7 @@ bot:
   notifyRoles: []       # Role IDs that will get notified when a blocked user is active
   notifyChannels: []    # Channel IDs that will get notified when a blocked user is active
   excludedChannels: []  # Channel IDs that should be ignored by the bot
+  lenientRoles: []      # Role IDs that when punished, will have lighter punishments
 database:
   host: 'localhost'
   port: 5432

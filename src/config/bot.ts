@@ -5,6 +5,8 @@ class BotConfig extends Conf {
 
     public readonly prefix: string;
 
+    public readonly guild: string;
+
     public readonly owners: string[];
 
     public readonly block: string[];
@@ -19,10 +21,13 @@ class BotConfig extends Conf {
 
     public readonly notifyChannels: string[];
 
+    public readonly lenientRoles: string[]
+
     constructor() {
         super('bot');
         this.token = 'BotToken';
         this.prefix = '!';
+        this.guild = '';
         this.owners = ['id1', 'id2'];
         this.block = [];
         this.excludedChannels = [];
@@ -30,6 +35,7 @@ class BotConfig extends Conf {
         this.notifyTimeout = 10;
         this.notifyRoles = [];
         this.notifyChannels = [];
+        this.lenientRoles = [];
     }
 }
 

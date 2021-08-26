@@ -6,6 +6,9 @@ import EventHandler from './EventHandler';
 import { PingableUserController } from './controllers/PingableUserController';
 import DatabaseManager from './database/database';
 import { PingController } from './controllers/PingController';
+import ExtendTimeout from './commands/pingable/extendtimeout';
+import ClearTimeout from './commands/pingable/cleartimeout';
+import PunishmentController from "./controllers/PunishmentController";
 
 class Bot extends SapphireClient {
     private readonly events: EventHandler;
@@ -14,7 +17,13 @@ class Bot extends SapphireClient {
 
     private readonly pingController: PingController;
 
+    private readonly punishmentController: PunishmentController;
+
     private readonly database: DatabaseManager;
+
+    private readonly synchronizeTimeout: number;
+
+    private synchronizeLoop: NodeJS.Timeout | undefined;
 
     constructor() {
         super({
@@ -24,6 +33,8 @@ class Bot extends SapphireClient {
                 instance: BotLogger.getInstance()
             }
         })
+
+        this.synchronizeTimeout = 1000 * 60; // 1 minute
 
         this.database = new DatabaseManager({
             host: CONFIG.database.host,
@@ -37,6 +48,7 @@ class Bot extends SapphireClient {
 
         this.pingableUserController = new PingableUserController(this);
         this.pingController = new PingController(this);
+        this.punishmentController = new PunishmentController(this);
 
         this.events = new EventHandler(this);
         this.registerEvents();
@@ -48,8 +60,14 @@ class Bot extends SapphireClient {
      */
     public async start(): Promise<void> {
         await this.database.init();
-        await this.pingableUserController.init();
         await this.login(CONFIG.bot.token);
+        await this.punishmentController.synchronize();
+        await this.pingableUserController.init();
+        this.synchronizeLoop = setInterval(
+            () => this.punishmentController.synchronize()
+                .catch((err) => Bot.getLogger('synchronization').error(err)),
+            this.synchronizeTimeout
+        )
     }
 
     /**
@@ -72,6 +90,10 @@ class Bot extends SapphireClient {
 
     public getPingController(): PingController {
         return this.pingController;
+    }
+
+    public getPunishmentController(): PunishmentController {
+        return this.punishmentController;
     }
 
     public getDatabase(): DatabaseManager {
