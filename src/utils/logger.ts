@@ -1,14 +1,45 @@
-import winston, { format } from 'winston';
+import winston, {format} from 'winston';
+import {Logger, LogLevel} from "@sapphire/framework";
 
 const { label, timestamp, combine, prettyPrint } = format;
 type Meta = {
     [s: string]: string | boolean | number | Meta | undefined;
 };
 
+export class BotLogger extends Logger {
+    private static instance: BotLogger | null = null;
+
+    private readonly title?: string;
+
+    public constructor(level?: LogLevel, title?: string) {
+        super(level || LogLevel.Trace);
+        this.title = title;
+    }
+
+    public write(level: LogLevel, ...values: unknown[]) {
+        if (this.title) {
+            values.unshift(this.title);
+        }
+        super.write(level, ...values);
+    }
+
+    public getTitledInstance(title?: string) {
+        return new BotLogger(this.level, title);
+    }
+
+    public static getInstance(level?: LogLevel) {
+        if (BotLogger.instance && level) {
+            BotLogger.instance.level = level;
+        }
+        return BotLogger.instance || new BotLogger(level)
+    }
+}
+
 /**
  * get a logger instance with {name} and optional {meta} data
  * @param name
  * @param meta
+ * @deprecated keeping for code example
  */
 function getLogger(name: string, meta?: Meta): winston.Logger {
     if (winston.loggers.has(name)) {
@@ -29,5 +60,3 @@ function getLogger(name: string, meta?: Meta): winston.Logger {
         defaultMeta: meta,
     });
 }
-
-export default getLogger;
