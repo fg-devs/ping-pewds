@@ -32,9 +32,19 @@ export default class PunishmentController extends Controller {
 
             if (shouldRemovePunishment) {
                 // TODO handle unmuting
-                await guild.members.unban(punishment.userId, 'They have served their sentence.');
-                await db.punishments.setActive(punishment.id, false);
-                this.getLogger().info(`${punishment.userId} has served their sentence.`)
+                try {
+                    await guild.members.unban(
+                        punishment.userId,
+                        'They have served their sentence.'
+                    );
+                    await db.punishments.setActive(punishment.id, false);
+                    this.getLogger().info(
+                        `${punishment.userId} has served their sentence.`
+                    );
+                } catch (noop) {
+                    // should only catch if the user was unbanned manually
+                    // and we shouldn't care about them.
+                }
                 return;
             }
 
