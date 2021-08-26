@@ -5,7 +5,7 @@ import validate from './validate';
 import BotConfig from './bot';
 import DatabaseConfig from './database';
 
-export default class Config extends Conf {
+class Config extends Conf {
     private static CONFIG_LOCATION = process.env.CONFIG || './config.yml';
 
     public readonly bot: BotConfig;
@@ -32,3 +32,5 @@ export default class Config extends Conf {
         return casted;
     }
 }
+
+export default Config;

@@ -10,7 +10,7 @@ import { PingController } from './controllers/PingController';
 import ExtendTimeout from './commands/pingable/extendtimeout';
 import ClearTimeout from './commands/pingable/cleartimeout';
 
-export default class Bot extends CommandoClient {
+class Bot extends CommandoClient {
     private readonly events: EventHandler;
 
     private readonly pingableUserController: PingableUserController;
@@ -113,3 +113,5 @@ export default class Bot extends CommandoClient {
         return getLogger(`Bot::${section}`);
     }
 }
+
+export default Bot;

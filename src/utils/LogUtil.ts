@@ -2,7 +2,7 @@ import { Command, CommandoMessage } from 'discord.js-commando';
 import Bot from '../Bot';
 import getLogger from './logger';
 
-export default class LogUtil {
+class LogUtil {
     /**
      * This breaks down the details of a command that was executed
      * @param {CommandoMessage} msg The message that executed the command
@@ -50,3 +50,6 @@ export default class LogUtil {
         return getLogger(`command::${c.name}`);
     }
 }
+
+export default LogUtil;
+

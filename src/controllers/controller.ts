@@ -7,7 +7,7 @@
 import winston from 'winston';
 import Bot from '../Bot';
 
-export default class Controller {
+class Controller {
     private readonly name: string;
 
     protected readonly bot: Bot;
@@ -29,3 +29,5 @@ export default class Controller {
         return Bot.getLogger(`Controller::${this.name}`);
     }
 }
+
+export default Controller;

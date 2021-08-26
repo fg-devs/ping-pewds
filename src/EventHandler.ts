@@ -2,7 +2,7 @@ import { Message } from 'discord.js';
 import winston from 'winston';
 import Bot from './Bot';
 
-export default class EventHandler {
+class EventHandler {
     private readonly bot: Bot;
 
     constructor(bot: Bot) {
@@ -32,3 +32,5 @@ export default class EventHandler {
         return Bot.getLogger('EventHandler');
     }
 }
+
+export default EventHandler;

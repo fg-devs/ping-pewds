@@ -1,6 +1,6 @@
 import Conf from './conf';
 
-export default class DatabaseConfig extends Conf {
+class DatabaseConfig extends Conf {
     public readonly host: string;
 
     public readonly port: number;
@@ -27,3 +27,5 @@ export default class DatabaseConfig extends Conf {
         this.connections = 10;
     }
 }
+
+export default DatabaseConfig;

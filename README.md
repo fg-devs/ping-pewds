@@ -59,3 +59,4 @@ npm run pm2
 |schema|`ping_pewds`|The schema in the database that is used|
 |database|`floorgang`|The database used|
 |connections|`10`|The maximum allowed connections created by the database|
+

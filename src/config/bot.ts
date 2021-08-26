@@ -1,6 +1,6 @@
 import Conf from './conf';
 
-export default class BotConfig extends Conf {
+class BotConfig extends Conf {
     public readonly token: string;
 
     public readonly prefix: string;
@@ -32,3 +32,5 @@ export default class BotConfig extends Conf {
         this.notifyChannels = [];
     }
 }
+
+export default BotConfig;

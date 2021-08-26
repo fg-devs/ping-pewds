@@ -4,7 +4,7 @@ import winston from 'winston';
 import Bot from './Bot';
 import LogUtil from './utils/LogUtil';
 
-export default class IssueHandler {
+class IssueHandler {
     /**
      * Log command failures
      * @param {Command} cmd Command that failed
@@ -61,3 +61,5 @@ ${LogUtil.breakDownErr(err)}`;
         return Bot.getLogger(`command::${c.name}`);
     }
 }
+
+export default IssueHandler;
