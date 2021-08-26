@@ -3,6 +3,7 @@ import winston from 'winston';
 import Table from './models/Table';
 import BlockedUsersTable from './tables/BlockedUsers';
 import Bot from '../Bot';
+import {BotLogger} from "../utils/logger";
 
 type CustomizedConfig = PoolConfig & {
     schema: string;
@@ -17,7 +18,7 @@ export default class DatabaseManager {
 
     private readonly username?: string;
 
-    private readonly logger: winston.Logger;
+    private readonly logger: BotLogger;
 
     public readonly blockedUsers: BlockedUsersTable;
 
@@ -97,7 +98,7 @@ export default class DatabaseManager {
             .filter((table) => typeof table !== 'undefined') as Table[];
     }
 
-    public static getLogger(section?: string): winston.Logger {
-        return Bot.getLogger(`Database${!!section && `::${section}`}`);
+    public static getLogger(section?: string): BotLogger {
+        return Bot.getLogger(`[Database${!!section && `::${section}`}]`);
     }
 }
