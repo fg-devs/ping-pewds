@@ -59,7 +59,7 @@ export class PingableUserController extends Controller {
         await this.extend(message.author.id, now);
 
         await this.notify(message);
-        this.getLogger().verbose(
+        this.getLogger().debug(
             `message sent by '${message.author.username}' at ${now}... Waiting until ${
                 now + CONFIG.bot.blockTimeout * 1000 * 60
             }`

@@ -1,7 +1,7 @@
 {
   "name": "ping-pewds",
   "description": "A discord bot that blocks pings of specified users, unless they are actively talking",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "lib/index.js",
   "license": "GPL-3.0",
   "author": {
@@ -15,6 +15,7 @@
   "scripts": {
     "start": "node ./lib/index.js",
     "dev": "nodemon --watch src/**/* -e ts,json --exec node --inspect=9229 -r ts-node/register src",
+    "debug": "node --inspect=9229 ./lib/index.js",
     "test-database": "mocha -r ts-node/register \"src/database/tests/**/runner.test.ts\" --watch --watch-files **/*.ts",
     "build": "tsc",
     "pm2": "pm2 start ecosystem.config.js",
@@ -23,9 +24,9 @@
     "lint:fix": "eslint --ext .ts src/ --fix"
   },
   "dependencies": {
+    "@sapphire/framework": "^1.0.2",
     "async-mutex": "^0.3.1",
     "discord.js": "^12.5.3",
-    "discord.js-commando": "^0.12.3",
     "js-yaml": "^4.1.0",
     "pg": "^8.6.0",
     "winston": "^3.3.3"

@@ -1,16 +1,14 @@
-import { Command, CommandoMessage } from 'discord.js-commando';
+import { Command, PieceContext } from "@sapphire/framework";
 import Bot from '../../Bot';
 import { CONFIG } from '../../globals';
+import {Message} from "discord.js";
 
 export default class ClearTimeout extends Command {
-    constructor(client: Bot) {
-        super(client, {
+    constructor(ctx: PieceContext) {
+        super(ctx, {
             name: 'clear',
             aliases: ['end', 'stop'],
-            guildOnly: true,
             description: 'Immediately stop all pings.',
-            group: 'pingable',
-            memberName: 'clear',
         });
     }
 
@@ -19,7 +17,7 @@ export default class ClearTimeout extends Command {
      * @param message
      * @param ownerOverride
      */
-    public hasPermission(message: CommandoMessage, ownerOverride?: boolean): boolean {
+    public hasPermission(message: Message, ownerOverride?: boolean): boolean {
         return CONFIG.bot.block.indexOf(message.author.id) >= 0 || ownerOverride === true;
     }
 
@@ -27,9 +25,11 @@ export default class ClearTimeout extends Command {
      * immediately stops all pings for the author
      * @param msg
      */
-    public async run(msg: CommandoMessage): Promise<null> {
+    public async run(msg: Message): Promise<null> {
+        if (!this.hasPermission(msg))
+            return null;
         const author = msg.author.id;
-        const client = this.client as Bot;
+        const client = this.context.client as Bot;
 
         const extended = await client
             .getPingableUserController()

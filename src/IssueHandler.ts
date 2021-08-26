@@ -1,41 +1,28 @@
 import { Message } from 'discord.js';
-import { Command, CommandoMessage } from 'discord.js-commando';
-import winston from 'winston';
+import {Command, CommandErrorPayload, CommandRunPayload} from "@sapphire/framework";
 import Bot from './Bot';
 import LogUtil from './utils/LogUtil';
+import {BotLogger} from "./utils/logger";
 
 class IssueHandler {
     /**
      * Log command failures
      * @param {Command} cmd Command that failed
      * @param {Error} err Error that ocurred
-     * @param {CommandoMessage} msg The user's message that executed the command
      * @param {any[]} _args Ignored arguments
      */
-    public onCommandError(
-        cmd: Command,
+    public async onCommandError(
         err: Error,
-        msg: CommandoMessage,
+        cmd: CommandErrorPayload,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any
         ..._args: any[]
-    ): void {
+    ): Promise<void> {
         const log = this.getLogger(cmd);
-        const message = `${msg.author.tag} executed "${msg.command?.name}"
-${LogUtil.breakDownMsg(msg)}
+        const message = `${cmd.message.author.tag} executed "${cmd.command?.name}"
+${await LogUtil.breakDownMsg(cmd)}
 ${LogUtil.breakDownErr(err)}`;
 
         log.error(message);
-    }
-
-    /**
-     * Log when a command was added to Modmail
-     * @param {Command} c Command being added
-     */
-    public onCommandRegister(c: Command): void {
-        const log = this.getLogger(c);
-        const message = 'registered';
-
-        log.debug(message);
     }
 
     /**
@@ -44,21 +31,21 @@ ${LogUtil.breakDownErr(err)}`;
      * @param {Promise} _p Command's result
      * @param {CommandoMessage} msg The user's message that executed the command
      */
-    public onCommandRun(
-        c: Command,
-        _p: Promise<Message | Message[] | null>,
-        msg: CommandoMessage
-    ): void {
-        const log = this.getLogger(c);
-        const message = `${msg.author.tag} executed this command\n${LogUtil.breakDownMsg(
-            msg
+    public async onCommandRun(
+        msg: Message,
+        cmd: Command,
+        payload: CommandRunPayload,
+    ): Promise<void> {
+        const log = this.getLogger(payload);
+        const message = `${msg.author.tag} executed this command\n${await LogUtil.breakDownMsg(
+            payload
         )}`;
 
         log.debug(message);
     }
 
-    private getLogger(c: Command): winston.Logger {
-        return Bot.getLogger(`command::${c.name}`);
+    private getLogger(c: CommandRunPayload): BotLogger {
+        return Bot.getLogger(`[command::${c.command.name}]`);
     }
 }
 

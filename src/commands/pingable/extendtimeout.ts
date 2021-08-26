@@ -1,33 +1,13 @@
-import { Command, CommandoMessage } from 'discord.js-commando';
+import { Command, PieceContext, Args } from "@sapphire/framework";
 import Bot from '../../Bot';
 import { CONFIG } from '../../globals';
-
-type Args = {
-    timeout: number;
-};
+import {Message} from "discord.js";
 
 export default class ExtendTimeout extends Command {
-    constructor(client: Bot) {
-        super(client, {
+    constructor(ctx: PieceContext) {
+        super(ctx, {
             name: 'extend',
-            // aliases: [],
-            guildOnly: true,
             description: 'Extend the time that that you want to allow users to ping you.',
-            group: 'pingable',
-            memberName: 'extend',
-            examples: ['extend 60', 'extend 3600'],
-            args: [
-                {
-                    default: 15,
-                    key: 'timeout',
-                    prompt: 'Timeout',
-                    label: 'time in minutes to extend',
-                    validate: (val: string) => val.match(/^\d+$/) !== null,
-                    parse: (val: string) => Number.parseInt(val, 10),
-                    wait: 10,
-                    error: 'Please enter a numeric value representing the number of minutes to extend.',
-                },
-            ],
         });
     }
 
@@ -36,8 +16,20 @@ export default class ExtendTimeout extends Command {
      * @param message
      * @param ownerOverride
      */
-    public hasPermission(message: CommandoMessage, ownerOverride?: boolean): boolean {
+    public hasPermission(message: Message, ownerOverride?: boolean): boolean {
         return CONFIG.bot.block.indexOf(message.author.id) >= 0 || ownerOverride === true;
+    }
+
+    private async validateArgs(args: Args) {
+        try {
+            return {
+                timeout: await args.rest('number')
+            }
+        } catch (_) {
+            return {
+                timeout: 15
+            }
+        }
     }
 
     /**
@@ -45,10 +37,15 @@ export default class ExtendTimeout extends Command {
      * @param msg
      * @param args
      */
-    public async run(msg: CommandoMessage, args: Args): Promise<null> {
-        const { timeout } = args;
+    public async run(msg: Message, args: Args): Promise<null> {
+        if (!this.hasPermission(msg))
+            return null;
+
+        const { timeout } = await this.validateArgs(args); // await args.rest('number');
+
         const author = msg.author.id;
-        const client = this.client as Bot;
+        const client = this.context.client as Bot;
+
         const date = new Date();
         const extended = await client
             .getPingableUserController()
