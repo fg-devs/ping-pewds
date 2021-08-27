@@ -1,12 +1,10 @@
 import { Message } from 'discord.js';
 import { Command, CommandoMessage } from 'discord.js-commando';
-import Bot from "./Bot";
-import { Logger } from './utils/logger';
+import winston from 'winston';
+import Bot from './Bot';
 import LogUtil from './utils/LogUtil';
-// import { Logger } from 'log4js';
-// import LogUtil from '../util/Logging';
 
-export default class IssueHandler {
+class IssueHandler {
     /**
      * Log command failures
      * @param {Command} cmd Command that failed
@@ -49,16 +47,19 @@ ${LogUtil.breakDownErr(err)}`;
     public onCommandRun(
         c: Command,
         _p: Promise<Message | Message[] | null>,
-        msg: CommandoMessage,
+        msg: CommandoMessage
     ): void {
         const log = this.getLogger(c);
-        const message = `${msg.author.tag} executed this command\n`
-            + `${LogUtil.breakDownMsg(msg)}`;
+        const message = `${msg.author.tag} executed this command\n${LogUtil.breakDownMsg(
+            msg
+        )}`;
 
         log.debug(message);
     }
 
-    private getLogger(c: Command): Logger {
+    private getLogger(c: Command): winston.Logger {
         return Bot.getLogger(`command::${c.name}`);
     }
 }
+
+export default IssueHandler;

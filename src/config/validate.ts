@@ -10,20 +10,18 @@ import Conf from './conf';
  * will be thrown
  * @throws {Error} See obj param description
  */
-export default function validate<T extends Conf>(ref: T, obj: any): void {
+function validate<T extends Conf>(ref: T, obj: any): void {
     const reference = Object.keys(ref);
     const objKeys = Object.keys(obj);
     let hasMissingAttr = false;
 
     for (let i = 0; i < reference.length; i += 1) {
         const key = reference[i];
-        if (key === 'name') {
+        if (key === 'name' || key === 'timeouts') {
             continue;
         }
-        if (!(objKeys.includes(key))) {
-            console.log(
-                `${ref.name} is missing ${key} attribute. See (docs/config.md)`,
-            );
+        if (!objKeys.includes(key)) {
+            console.log(`${ref.name} is missing ${key} attribute. See (docs/config.md)`);
             hasMissingAttr = true;
         }
     }
@@ -32,3 +30,5 @@ export default function validate<T extends Conf>(ref: T, obj: any): void {
         throw new Error('config.yml has missing attributes see above');
     }
 }
+
+export default validate;

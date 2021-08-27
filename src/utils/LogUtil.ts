@@ -1,7 +1,8 @@
 import { Command, CommandoMessage } from 'discord.js-commando';
 import Bot from '../Bot';
+import getLogger from './logger';
 
-export default class LogUtil {
+class LogUtil {
     /**
      * This breaks down the details of a command that was executed
      * @param {CommandoMessage} msg The message that executed the command
@@ -36,11 +37,7 @@ export default class LogUtil {
         log.warn(message);
     }
 
-    public static cmdError(
-        msg: CommandoMessage,
-        err: Error,
-        context: string,
-    ): void {
+    public static cmdError(msg: CommandoMessage, err: Error, context: string): void {
         const log = LogUtil.getCmdLogger(msg.command as Command);
         const message = `${msg.author.tag} executed "${msg.command?.name}"
     ${LogUtil.breakDownMsg(msg)}
@@ -50,6 +47,9 @@ export default class LogUtil {
     }
 
     private static getCmdLogger(c: Command) {
-        return Bot.getLogger(`command::${c.name}`);
+        return getLogger(`command::${c.name}`);
     }
 }
+
+export default LogUtil;
+

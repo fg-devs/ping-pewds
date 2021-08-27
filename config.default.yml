@@ -1,6 +1,18 @@
-logLevel: 'DEBUG'
-logs: './logs'
 bot:
   token: 'BotToken'
   prefix: '!'
   owners: ['id1', 'id2']
+  blockTimeout: 10      # delay in minutes to stop blocking pings if a specific user has spoken
+  block: []             # User IDs that will the bot will listen for mentions of
+  notifyTimeout: 10     # delay in minutes until notified roles will be alerted that the blocked users are no longer active
+  notifyRoles: []       # Role IDs that will get notified when a blocked user is active
+  notifyChannels: []    # Channel IDs that will get notified when a blocked user is active
+  excludedChannels: []  # Channel IDs that should be ignored by the bot
+database:
+  host: 'localhost'
+  port: 5432
+  user: 'username'
+  pass: 'password'
+  schema: 'ping_pewds'
+  database: 'floorgang'
+  connections: 10
