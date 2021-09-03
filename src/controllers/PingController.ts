@@ -56,7 +56,7 @@ export class PingController extends Controller {
             // punisher.get
 
             if (notification) {
-                await notification.delete({ timeout: 10000 }).catch(this.handleError);
+                // await notification.delete().catch(this.handleError);
             }
         }
 

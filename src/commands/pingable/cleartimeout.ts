@@ -1,17 +1,16 @@
-import { Command, PieceContext } from '@sapphire/framework';
+import {Command, CommandOptions, PieceContext} from '@sapphire/framework';
 import { Message } from 'discord.js';
 import Bot from '../../Bot';
 import { CONFIG } from '../../globals';
+import {ApplyOptions} from "@sapphire/decorators";
 
+@ApplyOptions<CommandOptions>({
+    name: 'clear',
+    aliases: ['end', 'stop'],
+    description: 'Immediately stop all pings.',
+    preconditions: ['GuildOnly'],
+})
 export default class ClearTimeout extends Command {
-    constructor(ctx: PieceContext) {
-        super(ctx, {
-            name: 'clear',
-            aliases: ['end', 'stop'],
-            description: 'Immediately stop all pings.',
-        });
-    }
-
     /**
      * compares the message author id to the 'block' config array
      * @param message
@@ -28,7 +27,7 @@ export default class ClearTimeout extends Command {
     public async run(msg: Message): Promise<null> {
         if (!this.hasPermission(msg)) return null;
         const author = msg.author.id;
-        const client = this.context.client as Bot;
+        const client = this.container.client as Bot;
 
         const extended = await client
             .getPingableUserController()
@@ -39,7 +38,7 @@ export default class ClearTimeout extends Command {
             const notification = await msg.channel.send({
                 content: `<@${author}>, you'll no longer be able to be pinged.`,
             });
-            await notification.delete({ timeout: 5000 });
+            // await notification.delete();
         }
 
         return null;

@@ -1,16 +1,15 @@
-import { Command, PieceContext, Args } from '@sapphire/framework';
+import {Command, PieceContext, Args, CommandOptions} from '@sapphire/framework';
 import { Message } from 'discord.js';
 import Bot from '../../Bot';
 import { CONFIG } from '../../globals';
+import {ApplyOptions} from "@sapphire/decorators";
 
+@ApplyOptions<CommandOptions>({
+    name: 'extend',
+    description: 'Extend the time that that you want to allow users to ping you.',
+    preconditions: ['GuildOnly'],
+})
 export default class ExtendTimeout extends Command {
-    constructor(ctx: PieceContext) {
-        super(ctx, {
-            name: 'extend',
-            description: 'Extend the time that that you want to allow users to ping you.',
-        });
-    }
-
     /**
      * compares the message author id to the 'block' config array
      * @param message
@@ -43,7 +42,7 @@ export default class ExtendTimeout extends Command {
         const { timeout } = await this.validateArgs(args); // await args.rest('number');
 
         const author = msg.author.id;
-        const client = this.context.client as Bot;
+        const client = this.container.client as Bot;
 
         const date = new Date();
         const extended = await client
@@ -60,7 +59,7 @@ Please note that this command should only be used if you plan on going AFK. Once
                     CONFIG.bot.blockTimeout
                 } minutes** after your last message.`,
             });
-            await notification.delete({ timeout: 30000 });
+            // await notification.delete();
         }
 
         return null;

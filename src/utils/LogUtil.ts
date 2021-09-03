@@ -8,7 +8,7 @@ class LogUtil {
      */
     public static async breakDownMsg(cmd: CommandRunPayload): Promise<string> {
         return ` * Time: ${cmd.message.createdAt}
- * Full: ${cmd.command?.name} ${await cmd.args.rest('string')}
+ * Full: ${cmd.message.content}
  * Guild: ${cmd.message.guild ? cmd.message.guild.name : 'No Guild'}`;
     }
 

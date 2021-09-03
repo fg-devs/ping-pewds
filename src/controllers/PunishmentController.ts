@@ -62,7 +62,8 @@ export default class PunishmentController extends Controller {
 
     public async punish(message: Message, pingedUsers: string[]): Promise<void> {
         const author = message.author.id;
-        const guildMember = message.guild?.member(author);
+
+        const guildMember = message.guild?.members.resolve(author);
         if (guildMember === null || typeof guildMember === 'undefined') {
             throw new Error('selected user is not a guild member somehow');
         }
@@ -173,7 +174,7 @@ You should have learned by now, but since you haven't, you're no longer welcome.
 
         const channel = await message.author.createDM();
         await channel.send({
-            embed,
+            embeds: [embed]
         });
 
         if (lenient && punishments === 0) {

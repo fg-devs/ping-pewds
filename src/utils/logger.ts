@@ -1,4 +1,6 @@
 import winston, { format } from 'winston';
+// import { Logger, LoggerLevel } from '@sapphire/plugin-logger';
+// import {LogLevel} from "@sapphire/framework";
 import { Logger, LogLevel } from '@sapphire/framework';
 
 const { label, timestamp, combine, prettyPrint } = format;
@@ -12,7 +14,10 @@ export class BotLogger extends Logger {
     private readonly title?: string;
 
     public constructor(level?: LogLevel, title?: string) {
-        super(level || LogLevel.Trace);
+        super(level || LogLevel.Debug)
+        // super({
+        //     level: level || LogLevel.Trace,
+        // });
         this.title = title;
     }
 
@@ -33,30 +38,4 @@ export class BotLogger extends Logger {
         }
         return BotLogger.instance || new BotLogger(level);
     }
-}
-
-/**
- * get a logger instance with {name} and optional {meta} data
- * @param name
- * @param meta
- * @deprecated keeping for code example
- */
-function getLogger(name: string, meta?: Meta): winston.Logger {
-    if (winston.loggers.has(name)) {
-        return winston.loggers.get(name);
-    }
-    return winston.loggers.add(name, {
-        transports: [
-            new winston.transports.Console({
-                handleExceptions: true,
-                debugStdout: true,
-                format: combine(
-                    timestamp(),
-                    label({ label: name }),
-                    prettyPrint({ colorize: true, depth: 5 })
-                ),
-            }),
-        ],
-        defaultMeta: meta,
-    });
 }

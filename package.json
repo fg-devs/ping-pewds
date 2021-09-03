@@ -14,19 +14,21 @@
   },
   "scripts": {
     "start": "node ./lib/index.js",
-    "dev": "nodemon --watch src/**/* -e ts,json --exec node --inspect=9229 -r ts-node/register src",
     "debug": "node --inspect=9229 ./lib/index.js",
-    "test-database": "mocha -r ts-node/register \"src/database/tests/**/runner.test.ts\" --watch --watch-files **/*.ts",
+    "dev": "yarn build && yarn debug",
     "build": "tsc",
-    "pm2": "pm2 start ecosystem.config.js",
-    "prettier": "prettier --write \"./src/**/*.{ts,tsx}\"",
+    "test-database": "mocha -r ts-node/register \"src/database/tests/**/runner.test.ts\" --watch --watch-files **/*.ts",
     "lint": "eslint --ext .ts src/",
-    "lint:fix": "eslint --ext .ts src/ --fix"
+    "lint:fix": "eslint --ext .ts src/ --fix",
+    "prettier": "prettier --write \"./src/**/*.{ts,tsx}\"",
+    "pm2": "pm2 start ecosystem.config.js"
   },
   "dependencies": {
-    "@sapphire/framework": "^1.0.2",
+    "@sapphire/framework": "next",
+    "@sapphire/plugin-logger": "next",
+    "@sapphire/decorators": "next",
     "async-mutex": "^0.3.1",
-    "discord.js": "^12.5.3",
+    "discord.js": "13.1.0",
     "js-yaml": "^4.1.0",
     "pg": "^8.6.0",
     "winston": "^3.3.3"

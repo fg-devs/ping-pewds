@@ -1,17 +1,12 @@
 import { SapphireClient } from '@sapphire/framework';
 import { CONFIG } from './globals';
 import { BotLogger } from './utils/logger';
-import IssueHandler from './IssueHandler';
-import EventHandler from './EventHandler';
 import { PingableUserController } from './controllers/PingableUserController';
 import DatabaseManager from './database/database';
 import { PingController } from './controllers/PingController';
-import ExtendTimeout from './commands/pingable/extendtimeout';
-import ClearTimeout from './commands/pingable/cleartimeout';
 import PunishmentController from './controllers/PunishmentController';
 
 class Bot extends SapphireClient {
-    private readonly events: EventHandler;
 
     private readonly pingableUserController: PingableUserController;
 
@@ -27,8 +22,10 @@ class Bot extends SapphireClient {
 
     constructor() {
         super({
+            intents: ['GUILDS', 'GUILD_MEMBERS', 'GUILD_MESSAGE_REACTIONS', 'GUILD_MESSAGES'],
             defaultPrefix: CONFIG.bot.prefix,
             id: CONFIG.bot.token,
+            caseInsensitiveCommands: true,
             logger: {
                 instance: BotLogger.getInstance(),
             },
@@ -50,8 +47,6 @@ class Bot extends SapphireClient {
         this.pingController = new PingController(this);
         this.punishmentController = new PunishmentController(this);
 
-        this.events = new EventHandler(this);
-        this.registerEvents();
     }
 
     /**
@@ -69,20 +64,6 @@ class Bot extends SapphireClient {
                     .catch((err) => Bot.getLogger('synchronization').error(err)),
             this.synchronizeTimeout
         );
-    }
-
-    /**
-     * Register message listeners and command handlers
-     * @private
-     */
-    private registerEvents(): void {
-        const issues = new IssueHandler();
-        this.on('commandError', issues.onCommandError.bind(issues));
-        this.on('commandRun', issues.onCommandRun.bind(issues));
-
-        this.on('message', this.events.onMessage.bind(this.events));
-
-        this.once('ready', this.events.onReady.bind(this.events));
     }
 
     public getPingableUserController(): PingableUserController {

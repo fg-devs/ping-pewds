@@ -88,7 +88,7 @@ export class PingableUserController extends Controller {
         this.notifyTimeouts[authorId] = setTimeout(() => {
             CONFIG.bot.notifyChannels.map(async (channelId) => {
                 const channel = message.guild?.channels.resolve(channelId) as TextChannel;
-                if (channel && channel.type === 'text') {
+                if (channel && channel.type === 'GUILD_TEXT') {
                     await channel.send({
                         content: `<@${authorId}> doesn't seem to be around anymore, you can rest your eyes`,
                         allowedMentions: { users: [] },
@@ -102,7 +102,7 @@ export class PingableUserController extends Controller {
 
         const notifyChannels = CONFIG.bot.notifyChannels.map(async (channelId) => {
             const channel = message.guild?.channels.resolve(channelId) as TextChannel;
-            if (channel && channel.type === 'text') {
+            if (channel && channel.type === 'GUILD_TEXT') {
                 const notifiedRoles = CONFIG.bot.notifyRoles.map(
                     (roleId) => `<@&${roleId}>`
                 );
