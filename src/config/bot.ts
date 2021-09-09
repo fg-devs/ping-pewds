@@ -23,6 +23,10 @@ class BotConfig extends Conf {
 
     public readonly lenientRoles: string[];
 
+    public readonly muteRole: string;
+
+    public readonly dryrun: boolean;
+
     constructor() {
         super('bot');
         this.token = 'BotToken';
@@ -36,6 +40,8 @@ class BotConfig extends Conf {
         this.notifyRoles = [];
         this.notifyChannels = [];
         this.lenientRoles = [];
+        this.muteRole = '';
+        this.dryrun = false;
     }
 }
 
