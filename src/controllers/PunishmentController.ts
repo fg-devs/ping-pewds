@@ -52,28 +52,29 @@ export type FlaggedMention = {
     type: TargetType
 };
 
-export type TargetType = 'standard'|'role'|'user';
+export type PunishmentType = 'ban' | 'mute' | 'kick';
+
+export type TargetType = 'role' | 'user';
 
 type StandardPunishment = {
     target: 'standard',
 }
 
 type TargetedPunishment = {
-    target: 'role'|'user';
+    target: 'role' | 'user';
     targetKey: string;
 }
 
 type DefaultPunishmentProps = {
     lenient: boolean;
     length: number | null;
-    type: 'ban'|'mute'|'kick'
+    type: PunishmentType
     target: TargetType;
 }
 
 type Punishment = DefaultPunishmentProps & (StandardPunishment | TargetedPunishment)
 
 type PunishmentCache = {
-    standard: Punishment[];
     role: {
         [s: string]: Punishment[];
     };
@@ -283,8 +284,6 @@ export default class PunishmentController extends Controller {
     }
 
     public hasPunishments(target: TargetType, targetKey?: string): boolean {
-        if (target === 'standard')
-            return this.punishments.standard.length > 0;
         if (typeof targetKey === 'string')
             return this.punishments[target][targetKey].length > 0;
         return false;
@@ -299,8 +298,6 @@ export default class PunishmentController extends Controller {
     }
 
     private getPunishments(target: TargetType, lenient: boolean, targetKey?: string): Punishment[] {
-        if (target === 'standard')
-            return this.punishments.standard.filter((k) => k.lenient === lenient);
         if (typeof targetKey === 'string' && this.punishments[target][targetKey])
             return this.punishments[target][targetKey].filter((k) => k.lenient === lenient);
         return [];
@@ -308,15 +305,11 @@ export default class PunishmentController extends Controller {
 
     private organizePunishments(punishments: Punishment[]) {
         const nextCache: PunishmentCache = {
-            standard: [],
             role: {},
             user: {}
         }
         punishments.forEach((punishment) => {
             switch (punishment.target) {
-                case 'standard':
-                    nextCache.standard.push(punishment)
-                    break;
                 case 'user':
                     if (typeof nextCache.user[punishment.targetKey] === 'undefined')
                         nextCache.user[punishment.targetKey] = [];
