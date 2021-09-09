@@ -4,14 +4,100 @@ import Bot from '../Bot';
 import { CONFIG } from '../globals';
 import { Parsed } from '../database/types';
 
+const TESTING_PUNISHMENTS: Punishment[] = [
+    // start of user target 194024167052410880
+    {
+        lenient: false,
+        target: 'user',
+        targetKey: '194024167052410880',
+        type: 'mute',
+        length: 1000 * 60 * 1 // 1 minute mute
+    },
+
+    {
+        lenient: false,
+        target: 'user',
+        targetKey: '194024167052410880',
+        type: 'ban',
+        length: 1000 * 60 * 2 // 1 minute mute
+    },
+
+    // start of role target 857451357471899658
+    {
+        lenient: false,
+        target: 'role',
+        targetKey: '857451357471899658',
+        type: 'mute',
+        length: 1000 * 60 * 1 // 1 minute mute
+    },
+    {
+        lenient: false,
+        target: 'role',
+        targetKey: '857451357471899658',
+        type: 'mute',
+        length: 1000 * 60 * 5 // 1 minute mute
+    },
+    {
+        lenient: false,
+        target: 'role',
+        targetKey: '857451357471899658',
+        type: 'ban',
+        length: 1000 * 60 * 10 // 10 minute ban
+    },
+]
+
+export type FlaggedMention = {
+    user: string;
+    role?: string;
+    type: TargetType
+};
+
+export type TargetType = 'standard'|'role'|'user';
+
+type StandardPunishment = {
+    target: 'standard',
+}
+
+type TargetedPunishment = {
+    target: 'role'|'user';
+    targetKey: string;
+}
+
+type DefaultPunishmentProps = {
+    lenient: boolean;
+    length: number | null;
+    type: 'ban'|'mute'|'kick'
+    target: TargetType;
+}
+
+type Punishment = DefaultPunishmentProps & (StandardPunishment | TargetedPunishment)
+
+type PunishmentCache = {
+    standard: Punishment[];
+    role: {
+        [s: string]: Punishment[];
+    };
+    user: {
+        [s: string]: Punishment[];
+    }
+}
+
 export default class PunishmentController extends Controller {
-    constructor(bot: Bot) {
+
+    private punishments: PunishmentCache;
+
+    public constructor(bot: Bot) {
         super(bot, 'PunishmentController');
+
+        this.punishments = this.organizePunishments(TESTING_PUNISHMENTS);
     }
 
     public async synchronize(): Promise<void> {
         const db = this.bot.getDatabase();
         const activePunishments = await db.punishments.getAllLatest();
+
+        // TODO synchronize punishments from database
+        this.punishments = this.organizePunishments(TESTING_PUNISHMENTS);
 
         const guild = this.bot.guilds.resolve(CONFIG.bot.guild);
         if (guild === null) throw new Error('Guild not found.');
@@ -33,40 +119,43 @@ export default class PunishmentController extends Controller {
                 punishment.endsAt.getTime() < Date.now() &&
                 punishment.active;
 
-            if (shouldRemovePunishment) {
-                // TODO handle unmuting
-                try {
-                    await guild.members.unban(
-                        punishment.userId,
-                        'They have served their sentence.'
-                    );
-                    await db.punishments.setActive(punishment.id, false);
-                    this.getLogger().info(
-                        `${punishment.userId} has served their sentence.`
-                    );
-                } catch (noop) {
-                    // should only catch if the user was unbanned manually
-                    // and we shouldn't care about them.
-                }
+            if (!shouldRemovePunishment)
                 return;
+
+            const member = await guild.members.fetch(punishment.userId)
+            if (member) {
+                await member.roles.remove(CONFIG.bot.muteRole);
             }
 
-            // TODO handle muted punishments
+            try {
+                await guild.members.unban(
+                    punishment.userId,
+                    'They have served their sentence.'
+                );
+                await db.punishments.setActive(punishment.id, false);
+                this.getLogger().info(
+                    `${punishment.userId} has served their sentence.`
+                );
+            } catch (noop) {
+                // should only catch if the user was unbanned manually
+                // and we shouldn't care about them.
+            }
 
-            await guild.members.ban(punishment.userId, {
-                reason: this.getPunishmentReason(punishment.count),
-                days: 1,
-            });
         };
     }
 
-    public async punish(message: Message, pingedUsers: string[]): Promise<void> {
+    public async punish(message: Message, mentions: FlaggedMention[]): Promise<void> {
         const author = message.author.id;
+        const guild = message.guild;
+        if (guild === null) {
+            throw new Error('guild not found.');
+        }
 
         const guildMember = message.guild?.members.resolve(author);
         if (guildMember === null || typeof guildMember === 'undefined') {
             throw new Error('selected user is not a guild member somehow');
         }
+
         const db = this.bot.getDatabase();
         const currentPunishments = await db.punishments.getByUserId(
             guildMember.user.id,
@@ -76,154 +165,170 @@ export default class PunishmentController extends Controller {
         // TODO create a lenient role that has lighter punishments
         //      necessary for the tiered roles to have lighter punishments since they are patrons
 
-        const punishTime = this.getPunishmentTime(currentPunishments.length);
+
+        const hasLenientRole = CONFIG.bot.lenientRoles.findIndex((role) => {
+            return guildMember.roles.resolve(role) !== null;
+        }) >= 0;
+
+        let punishments: Punishment[] = [];
+
+        for (const mention of mentions) {
+            if (punishments.length > 0)
+                break;
+            punishments.push(
+                ...this.getPunishments(
+                    mention.type,
+                    hasLenientRole,
+                    mention.type === 'user'
+                        ? mention.user
+                        : mention.type === 'role' && mention.role
+                            ? mention.role
+                            : undefined
+                )
+            );
+        }
+
+        if (punishments.length === 0 && hasLenientRole) {
+            this.getLogger().warn({
+                error: 'No lenient punishments found.',
+                mentions,
+            })
+            return;
+        }
+
+        const nextPunishment = punishments[Math.min(currentPunishments.length, punishments.length - 1)];
+
+        const endsAt = typeof nextPunishment.length === 'number' ? Date.now() + nextPunishment.length : true;
 
         await db.punishments.create({
-            userId: message.author.id as string,
-            endsAt: punishTime,
-        });
+            userId: author,
+            endsAt,
+        })
 
         await this.handleDiscordPunishment(
             message,
-            currentPunishments.length,
-            punishTime,
-            pingedUsers
+            nextPunishment,
+            mentions,
+            currentPunishments,
+            endsAt
         );
     }
 
-    /**
-     * used to notify users of punishment
-     * @todo handle discord punishments
-     * @param message
-     * @param punishments
-     * @param punishTime
-     * @param pinged
-     * @param lenient
-     * @private
-     */
     private async handleDiscordPunishment(
         message: Message,
-        punishments: number,
-        punishTime: boolean | number,
-        pinged: string[],
-        lenient = false
+        punishment: Punishment,
+        mentions: FlaggedMention[],
+        punishmentHistory: Array<Parsed.Punishment | null>,
+        endsAt: number | true
     ) {
-        let embed: MessageEmbedOptions = {
-            title: `You've been banned on ${message.guild?.name}.`,
+        const duration = endsAt === true ? 'the end of time' : `<t:${Math.round(endsAt / 1000)}>`
+        let description: string | undefined;
+
+        switch (punishment.type) {
+            case 'ban':
+                description = `You've been banned until ${duration} for pinging the following people.`
+                break;
+            case 'mute':
+                description = `You've been muted until ${duration} for pinging the following people.`
+                break;
+            case 'kick':
+                description = `You've been kicked for pinging the following people.`
+                break;
+        }
+
+        const embed: MessageEmbedOptions = {
+            title: `You've been banned on ${message.guild?.name} server.`,
             timestamp: Date.now(),
             footer: {
                 text: `C'mon, you know better than this!`,
             },
+            description,
+            fields: [
+                {
+                    name: 'Mentioned Users',
+                    value: mentions.map((mention) => `<@${mention.user}>`).join(', ')
+                },
+                {
+                    name: 'Punishment History',
+                    value: punishmentHistory.length > 0 ? punishmentHistory.map((pun) => {
+                        return `Punished at <t:${Math.round((pun?.createdAt.getTime() || 0) / 1000)}>`
+                    }).join('\n') : 'No previous punishments'
+                }
+            ],
             color: 'RED',
         };
-        const peopleOrPerson = pinged.length === 1 ? 'person' : 'people';
-        // const parsedPings = pinged.map((id) => `<@${id}>`);
-        switch (punishments) {
-            case 0: // first punishment
-                embed = {
-                    ...embed,
-                    description: `You've been temporarily banned for **7 days**.
-You pinged the following ${peopleOrPerson}: ${pinged.join(', ')}\n
-You will be unbanned on **<t:${Math.round((punishTime as number) / 1000)}>**.`,
-                };
-                break;
-            case 1: // second punishment
-                embed = {
-                    ...embed,
-                    description: `You've been temporarily banned for **30 days**.
-You pinged the following ${peopleOrPerson}: ${pinged.join(', ')}\n
-This is your second time pinging someone you shouldn't. ${
-                        !lenient
-                            ? 'If you do it again, you will be permanently banned.'
-                            : ''
-                    }
-You will be unbanned on **<t:${Math.round((punishTime as number) / 1000)}>**.`,
-                };
-                break;
-            case 2: // third punishment
-                embed = {
-                    ...embed,
-                    title: `You've been banned on ${message.guild?.name}.`,
-                    description: `You've been banned for eternity.
-You pinged the following ${peopleOrPerson}: ${pinged.join(', ')}\n
-This is your third time pinging someone you shouldn't.\n\n${
-                        !lenient
-                            ? "As they say in Baseball, *three strikes and you're out!*"
-                            : 'If you do this again, you will be permanently banned.'
-                    }`,
-                    footer: {
-                        text: 'Oops!',
-                    },
-                };
-                break;
-            default:
-                // >= fourth punishment
-                embed = {
-                    ...embed,
-                    title: `You've been banned on ${message.guild?.name}.`,
-                    description: `You've been banned for eternity.
-You pinged the following ${peopleOrPerson}: ${pinged.join(', ')}\n
-This is your fourth time pinging someone you shouldn't.\n
-You should have learned by now, but since you haven't, you're no longer welcome.`,
-                    footer: {
-                        text: 'Oops!',
-                    },
-                };
-                break;
-        }
 
         const channel = await message.author.createDM();
         await channel.send({
             embeds: [embed]
         });
 
-        if (lenient && punishments === 0) {
-            // TODO handle lenient first time offender (mute them)
-        } else {
-            await message.guild?.members.ban(message.author, {
-                reason: this.getPunishmentReason(punishments, lenient),
-                days: 1, // since the bot has to synchronize manually, this doesn't really matter
-            });
-        }
+        // skip the actual punishment for testing
+        if (CONFIG.bot.dryrun)
+            return true;
 
-        this.getLogger().info(
-            `${message.author.id} was ${this.getPunishmentReason(punishments, lenient)}`
-        );
-    }
-
-    private getPunishmentReason(punishments: number, lenient = false): string {
-        switch (punishments) {
-            case 0: // first punishment
-                return lenient
-                    ? "Muted for 1 day for pinging users they shouldn't."
-                    : "Banned for 7 days for pinging users they shouldn't.";
-            case 1: // second punishment
-                return lenient
-                    ? "Banned for 7 days for pinging users they shouldn't."
-                    : "Banned for 30 days for pinging users they shouldn't.";
-            case 2: // third punishment
-                return lenient
-                    ? "Banned for 30 days for pinging users they shouldn't."
-                    : "Permanently banned for pinging users they shouldn't.";
+        switch (punishment.type) {
+            case 'ban':
+                await message.guild?.members.ban(message.author, {
+                    reason: `Pinging people they shouldn't ping.`
+                });
+                break;
+            case 'mute':
+                const member = message.guild?.members.resolve(message.author);
+                member?.roles.add(CONFIG.bot.muteRole);
+                break;
             default:
-                return "Permanently banned for pinging users they shouldn't.";
+                this.getLogger().error(`Unhandled punishment type ${punishment.type}`);
         }
     }
 
-    private getPunishmentTime(punishments: number, lenient = false): number | boolean {
-        const now = Date.now();
+    public hasPunishments(target: TargetType, targetKey?: string): boolean {
+        if (target === 'standard')
+            return this.punishments.standard.length > 0;
+        if (typeof targetKey === 'string')
+            return this.punishments[target][targetKey].length > 0;
+        return false;
+    }
 
-        const days = (days: number) => now + days * 1000 * 60 * 60 * 24;
+    public getBlockedUsers() {
+        return Object.keys(this.punishments.user)
+    }
 
-        switch (punishments) {
-            case 0: // first punishment
-                return lenient ? days(1) : days(7);
-            case 1: // second punishment
-                return lenient ? days(7) : days(30);
-            case 2: // third punishment
-                return lenient ? days(30) : true;
-            default:
-                return true;
+    public getBlockedRoles() {
+        return Object.keys(this.punishments.role);
+    }
+
+    private getPunishments(target: TargetType, lenient: boolean, targetKey?: string): Punishment[] {
+        if (target === 'standard')
+            return this.punishments.standard.filter((k) => k.lenient === lenient);
+        if (typeof targetKey === 'string' && this.punishments[target][targetKey])
+            return this.punishments[target][targetKey].filter((k) => k.lenient === lenient);
+        return [];
+    }
+
+    private organizePunishments(punishments: Punishment[]) {
+        const nextCache: PunishmentCache = {
+            standard: [],
+            role: {},
+            user: {}
         }
+        punishments.forEach((punishment) => {
+            switch (punishment.target) {
+                case 'standard':
+                    nextCache.standard.push(punishment)
+                    break;
+                case 'user':
+                    if (typeof nextCache.user[punishment.targetKey] === 'undefined')
+                        nextCache.user[punishment.targetKey] = [];
+                    nextCache.user[punishment.targetKey].push(punishment);
+                    break;
+                case 'role':
+                    if (typeof nextCache.role[punishment.targetKey] === 'undefined')
+                        nextCache.role[punishment.targetKey] = [];
+                    nextCache.role[punishment.targetKey].push(punishment);
+                    break;
+            }
+        })
+        return nextCache;
     }
 }
