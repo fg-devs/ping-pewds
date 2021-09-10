@@ -56,7 +56,6 @@ export default class PunishmentController extends Controller {
         const activePunishments = await db.punishmentHistory.getAllLatest();
 
         const punishments = await db.punishments.getAllActive()
-        console.log({ punishments })
         this.punishments = this.organizePunishments(
             punishments
         );
