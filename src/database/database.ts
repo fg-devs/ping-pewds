@@ -1,9 +1,10 @@
 import { Pool, PoolConfig, DatabaseError, PoolClient } from 'pg';
 import Table from './models/Table';
-import BlockedUsersTable from './tables/BlockedUsers';
 import Bot from '../Bot';
 import { BotLogger } from '../utils/logger';
+import BlockedUsersTable from './tables/BlockedUsers';
 import PunishmentHistory from './tables/PunishmentHistory';
+import Punishments from "./tables/Punishments";
 
 type CustomizedConfig = PoolConfig & {
     schema: string;
@@ -24,6 +25,8 @@ export default class DatabaseManager {
 
     public readonly punishmentHistory: PunishmentHistory;
 
+    public readonly punishments: Punishments;
+
     constructor(config: CustomizedConfig) {
         const { schema, ...poolConfig } = config;
         this.pool = new Pool(poolConfig);
@@ -33,6 +36,7 @@ export default class DatabaseManager {
 
         this.blockedUsers = new BlockedUsersTable(this);
         this.punishmentHistory = new PunishmentHistory(this);
+        this.punishments = new Punishments(this);
 
         this.logger = DatabaseManager.getLogger();
     }
