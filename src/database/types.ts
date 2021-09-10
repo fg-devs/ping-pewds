@@ -95,3 +95,11 @@ export type DBTable = Results.DBBlockedUser | Results.DBPunishmentHistory;
 
 export type DBParsed = Parsed.BlockedUser | Parsed.PunishmentHistory;
 // | Parsed.NextTable
+
+export namespace Tables {
+    export namespace Punishments {
+        export type CreateObject = Omit<Parsed.Punishment, 'id'|'active'|'length'> & {
+            length?: number;
+        };
+    }
+}

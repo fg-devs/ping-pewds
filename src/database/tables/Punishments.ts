@@ -1,12 +1,10 @@
 import Table from "../models/Table";
-import {Parsed, Results, ValidationState} from "../types";
+import {Parsed, Results, Tables, ValidationState} from "../types";
 import DatabaseManager from "../database";
 import {PoolClient} from "pg";
 import {DatabaseError, InsertError, SelectError} from "../errors";
 
-type PunishmentObject = Omit<Parsed.Punishment, 'id'|'active'|'length'> & {
-    length?: number;
-};
+type CreateObject = Tables.Punishments.CreateObject;
 
 export default class Punishments extends Table<
     Results.DBPunishment,
@@ -38,11 +36,11 @@ export default class Punishments extends Table<
         };
     }
 
-    public async create(punishment: PunishmentObject): Promise<boolean>
-    public async create(connection: PoolClient | undefined, punishment: PunishmentObject): Promise<boolean>
-    public async create(connection: PoolClient | PunishmentObject | undefined, punishment?: PunishmentObject): Promise<boolean> {
-        if (typeof (connection as PunishmentObject)?.type === 'string') {
-            punishment = connection as PunishmentObject;
+    public async create(punishment: CreateObject): Promise<boolean>
+    public async create(connection: PoolClient | undefined, punishment: CreateObject): Promise<boolean>
+    public async create(connection: PoolClient | CreateObject | undefined, punishment?: CreateObject): Promise<boolean> {
+        if (typeof (connection as CreateObject)?.type === 'string') {
+            punishment = connection as CreateObject;
             connection = undefined;
         }
 
@@ -128,6 +126,12 @@ export default class Punishments extends Table<
                 `ALTER TABLE ${this.full} ADD CONSTRAINT ${this.name}_pk
                     PRIMARY KEY (${this.mappedKeys.id}, ${this.mappedKeys.index});`
             );
+
+            await this.query(
+                connection,
+                `CREATE UNIQUE INDEX ${this.name}_unique_idx ON ${this.full}
+                    (${this.mappedKeys.index}, ${this.mappedKeys.target}, ${this.mappedKeys.targetKey}, ${this.mappedKeys.lenient})`
+            )
 
             return ValidationState.VALIDATED;
         } catch (e) {
