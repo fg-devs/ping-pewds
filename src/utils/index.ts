@@ -13,7 +13,10 @@ export function minutesToReadable(minutes?: number) {
         days = hours / 24;
         hours = hours % 24;
     }
-    let str = `${Math.floor(minutes)} minutes`;
+    let str = '';
+    if (minutes > 0) {
+        str = `${Math.floor(minutes)} minutes`
+    }
     if (hours > 0) {
         str = `${Math.floor(hours)} hours, ` + str;
     }
