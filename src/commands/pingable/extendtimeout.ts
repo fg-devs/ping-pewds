@@ -16,7 +16,8 @@ export default class ExtendTimeout extends Command {
      * @param ownerOverride
      */
     public hasPermission(message: Message, ownerOverride?: boolean): boolean {
-        return CONFIG.bot.block.indexOf(message.author.id) >= 0 || ownerOverride === true;
+        const bot = this.container.client as Bot;
+        return bot.getPunishmentController().isMonitoredUser(message) || ownerOverride === true;
     }
 
     private async validateArgs(args: Args) {
