@@ -175,11 +175,12 @@ export default class PunishmentController extends Controller {
         );
     }
 
-    public isMonitoredUser(message: Message): boolean {
+    public async isMonitoredUser(message: Message): Promise<boolean> {
         const author = message.author.id;
+        const member = await message.member?.fetch();
         const hasMonitoredRole = Object.keys(this.punishments.role)
             .findIndex((role) => (
-                message.member?.roles.resolve(role) !== null
+                member?.roles.resolve(role) !== null
             )) >= 0
         const isMonitoredUser = this.punishments.user[author] instanceof Array;
 

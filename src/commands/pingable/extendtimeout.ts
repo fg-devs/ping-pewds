@@ -15,9 +15,9 @@ export default class ExtendTimeout extends Command {
      * @param message
      * @param ownerOverride
      */
-    public hasPermission(message: Message, ownerOverride?: boolean): boolean {
+    public async hasPermission(message: Message, ownerOverride?: boolean): Promise<boolean> {
         const bot = this.container.client as Bot;
-        return bot.getPunishmentController().isMonitoredUser(message) || ownerOverride === true;
+        return await bot.getPunishmentController().isMonitoredUser(message) || ownerOverride === true;
     }
 
     private async validateArgs(args: Args) {
@@ -38,7 +38,7 @@ export default class ExtendTimeout extends Command {
      * @param args
      */
     public async run(msg: Message, args: Args): Promise<null> {
-        if (!this.hasPermission(msg)) return null;
+        if (!await this.hasPermission(msg)) return null;
 
         const { timeout } = await this.validateArgs(args); // await args.rest('number');
 
