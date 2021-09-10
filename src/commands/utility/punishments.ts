@@ -65,7 +65,7 @@ export default class Punishments extends SubCommandPluginCommand {
             type: parsedArgs.type,
             length: parsedArgs.length ? parsedArgs.length * 1000 * 60 : undefined,
             lenient: parsedArgs.lenient,
-        }).catch((err: InsertError) => err)
+        }).catch((err: InsertError) => err);
 
         if (created instanceof DatabaseError) {
             message.channel.send({
@@ -86,6 +86,8 @@ Punishment is lenient: ${parsedArgs.lenient}
 Punishment length ${minutesToReadable(parsedArgs.length)}
 \`\`\``
         })
+
+        await bot.getPunishmentController().synchronize();
     }
 
     private static getRoleOrUser(args: Tables.Punishments.CreateObject) {
