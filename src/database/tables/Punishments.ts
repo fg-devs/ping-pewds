@@ -89,7 +89,7 @@ export default class Punishments extends Table<
         return response.rowCount > 0;
     }
 
-    public async getAllActive(connection?: PoolClient) {
+    public async getAllActive(connection?: PoolClient): Promise<Array<Parsed.Punishment>> {
 
         const response = await this.query<Results.DBPunishment>(
             connection,
@@ -112,8 +112,8 @@ export default class Punishments extends Table<
                      ${this.mappedKeys.id} serial NOT NULL,
                      ${this.mappedKeys.index} INT NOT NULL,
                      ${this.mappedKeys.active} INT DEFAULT 1,
-                     ${this.mappedKeys.type} CHAR(16) NOT NULL,
-                     ${this.mappedKeys.target} CHAR(16) NOT NULL,
+                     ${this.mappedKeys.type} VARCHAR(16) NOT NULL,
+                     ${this.mappedKeys.target} VARCHAR(16) NOT NULL,
                      ${this.mappedKeys.targetKey} BIGINT,
                      ${this.mappedKeys.length} INT,
                      ${this.mappedKeys.lenient} INT DEFAULT 1
@@ -140,10 +140,7 @@ export default class Punishments extends Table<
         }
     }
 
-    protected parse(data?: Results.DBPunishment): Parsed.Punishment | null {
-        if (typeof data === 'undefined' || data === null)
-            return null;
-
+    protected parse(data: Results.DBPunishment): Parsed.Punishment {
         return {
             id: data.punishment_id,
             active: data.punishment_active === 1,
