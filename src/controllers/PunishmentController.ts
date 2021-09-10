@@ -4,48 +4,6 @@ import Bot from '../Bot';
 import { CONFIG } from '../globals';
 import { Parsed } from '../database/types';
 
-const TESTING_PUNISHMENTS: Punishment[] = [
-    // start of user target 194024167052410880
-    {
-        lenient: false,
-        target: 'user',
-        targetKey: '194024167052410880',
-        type: 'mute',
-        length: 1000 * 60 * 1 // 1 minute mute
-    },
-
-    {
-        lenient: false,
-        target: 'user',
-        targetKey: '194024167052410880',
-        type: 'ban',
-        length: 1000 * 60 * 2 // 1 minute mute
-    },
-
-    // start of role target 857451357471899658
-    {
-        lenient: false,
-        target: 'role',
-        targetKey: '857451357471899658',
-        type: 'mute',
-        length: 1000 * 60 * 1 // 1 minute mute
-    },
-    {
-        lenient: false,
-        target: 'role',
-        targetKey: '857451357471899658',
-        type: 'mute',
-        length: 1000 * 60 * 5 // 1 minute mute
-    },
-    {
-        lenient: false,
-        target: 'role',
-        targetKey: '857451357471899658',
-        type: 'ban',
-        length: 1000 * 60 * 10 // 10 minute ban
-    },
-]
-
 export type FlaggedMention = {
     user: string;
     role?: string;
@@ -90,15 +48,18 @@ export default class PunishmentController extends Controller {
     public constructor(bot: Bot) {
         super(bot, 'PunishmentController');
 
-        this.punishments = this.organizePunishments(TESTING_PUNISHMENTS);
+        this.punishments = this.organizePunishments();
     }
 
     public async synchronize(): Promise<void> {
         const db = this.bot.getDatabase();
         const activePunishments = await db.punishmentHistory.getAllLatest();
 
-        // TODO synchronize punishments from database
-        this.punishments = this.organizePunishments(TESTING_PUNISHMENTS);
+        const punishments = await db.punishments.getAllActive()
+        console.log({ punishments })
+        this.punishments = this.organizePunishments(
+            punishments
+        );
 
         const guild = this.bot.guilds.resolve(CONFIG.bot.guild);
         if (guild === null) throw new Error('Guild not found.');
@@ -215,6 +176,17 @@ export default class PunishmentController extends Controller {
         );
     }
 
+    public isMonitoredUser(message: Message): boolean {
+        const author = message.author.id;
+        const hasMonitoredRole = Object.keys(this.punishments.role)
+            .findIndex((role) => (
+                message.member?.roles.resolve(role) !== null
+            )) >= 0
+        const isMonitoredUser = this.punishments.user[author] instanceof Array;
+
+        return isMonitoredUser || hasMonitoredRole;
+    }
+
     private async handleDiscordPunishment(
         message: Message,
         punishment: Punishment,
@@ -303,11 +275,14 @@ export default class PunishmentController extends Controller {
         return [];
     }
 
-    private organizePunishments(punishments: Punishment[]) {
+    private organizePunishments(punishments?: Punishment[]) {
         const nextCache: PunishmentCache = {
             role: {},
             user: {}
         }
+        if (typeof punishments === 'undefined')
+            return nextCache;
+
         punishments.forEach((punishment) => {
             switch (punishment.target) {
                 case 'user':
