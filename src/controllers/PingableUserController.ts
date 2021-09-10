@@ -3,6 +3,7 @@ import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
 import Timeout = NodeJS.Timeout;
+import {minutesToReadable} from "../utils";
 
 type Message = DiscordMessage & {
     command?: never | null;
@@ -34,13 +35,7 @@ export class PingableUserController extends Controller {
      */
     public async init(): Promise<void> {
         const db = this.bot.getDatabase();
-        const ids = CONFIG.bot.block
-            .filter((id) => id.match(/^\d+$/))
-            .map((id) => Number.parseInt(id, 10));
-
-        await db.blockedUsers.initializeUsers(ids);
-
-        const users = await db.blockedUsers.getById(ids);
+        const users = await db.blockedUsers.getAll();
         users.forEach((user) =>
             user ? (this.usersLastMessage[`${user.id}`] = user.lastMessage) : undefined
         );
@@ -51,7 +46,8 @@ export class PingableUserController extends Controller {
      * extend the timeout for the user and notify notifiable roles
      */
     public async handleMessage(message: Message): Promise<boolean> {
-        if (CONFIG.bot.block.indexOf(message.author.id) < 0 && message.command !== null) {
+        const punishmentController = this.bot.getPunishmentController();
+        if (!punishmentController.isMonitoredUser(message) || message.author.bot) {
             return false;
         }
 
@@ -109,10 +105,25 @@ export class PingableUserController extends Controller {
                 const link = `https://discord.com/channels/${message.guild?.id}/${message.channel.id}/${message.id}`;
                 await channel
                     .send({
-                        content: `${notifiedRoles.join(
+                        content: `**Attention ${notifiedRoles.join(
                             ', '
-                        )}, <@${authorId}> has made an appearance! I'll notify you once some time has past since they have sent a message.\n${link}`,
-                        allowedMentions: { roles: CONFIG.bot.notifyRoles },
+                        )},** 
+<@${authorId}> has made an appearance!
+I'll notify you again after \`${minutesToReadable(timeout)}\` have passed since the last message they send.`,
+                        allowedMentions: { roles: CONFIG.bot.notifyRoles, users: [] },
+                        components: [
+                            {
+                                type: 'ACTION_ROW',
+                                components: [
+                                    {
+                                        type: 'BUTTON',
+                                        label: 'View Post',
+                                        url: link,
+                                        style: 'LINK'
+                                    }
+                                ]
+                            }
+                        ]
                     })
                     .catch(this.handleError);
             }
