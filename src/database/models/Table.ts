@@ -1,8 +1,8 @@
-import { PoolClient, QueryResult } from 'pg';
+import {PoolClient, QueryResult} from 'pg';
 import DatabaseManager from '../database';
-import { DatabaseError } from '../errors';
-import { DBParsed, DBTable, ValidationState, ValueObject } from '../types';
-import { BotLogger } from '../../utils/logger';
+import {DatabaseError} from '../errors';
+import {DBParsed, DBTable, ValidationState, ValueObject} from '../types';
+import {BotLogger} from '../../utils/logger';
 
 export default class Table<Row = DBTable, Parsed = DBParsed> {
     protected readonly manager: DatabaseManager;
@@ -137,6 +137,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
      */
     public async drop(connection?: PoolClient): Promise<void> {
         await this.query(connection, `DROP TABLE IF EXISTS ${this.full};`);
+        this.state = ValidationState.NOT_PROCESSED;
     }
 
     /**
@@ -171,6 +172,9 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
                         `${this.full} required additional initialization.`
                     );
                     await this.validate(connection);
+                    break;
+                case ValidationState.VALIDATED:
+                    // noop
                     break;
                 default:
                     throw new DatabaseError(

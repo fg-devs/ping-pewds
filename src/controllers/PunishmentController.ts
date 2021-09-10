@@ -95,7 +95,7 @@ export default class PunishmentController extends Controller {
 
     public async synchronize(): Promise<void> {
         const db = this.bot.getDatabase();
-        const activePunishments = await db.punishments.getAllLatest();
+        const activePunishments = await db.punishmentHistory.getAllLatest();
 
         // TODO synchronize punishments from database
         this.punishments = this.organizePunishments(TESTING_PUNISHMENTS);
@@ -108,9 +108,9 @@ export default class PunishmentController extends Controller {
 
     public syncPunishment(
         guild: Guild
-    ): (punishment: Parsed.PunishmentWithCount | null) => Promise<void> {
+    ): (punishment: Parsed.PunishmentHistoryWithCount | null) => Promise<void> {
         const db = this.bot.getDatabase();
-        return async (punishment: Parsed.PunishmentWithCount | null) => {
+        return async (punishment: Parsed.PunishmentHistoryWithCount | null) => {
             if (punishment === null) {
                 return;
             }
@@ -133,7 +133,7 @@ export default class PunishmentController extends Controller {
                     punishment.userId,
                     'They have served their sentence.'
                 );
-                await db.punishments.setActive(punishment.id, false);
+                await db.punishmentHistory.setActive(punishment.id, false);
                 this.getLogger().info(
                     `${punishment.userId} has served their sentence.`
                 );
@@ -158,7 +158,7 @@ export default class PunishmentController extends Controller {
         }
 
         const db = this.bot.getDatabase();
-        const currentPunishments = await db.punishments.getByUserId(
+        const currentPunishments = await db.punishmentHistory.getByUserId(
             guildMember.user.id,
             true
         );
@@ -201,7 +201,7 @@ export default class PunishmentController extends Controller {
 
         const endsAt = typeof nextPunishment.length === 'number' ? Date.now() + nextPunishment.length : true;
 
-        await db.punishments.create({
+        await db.punishmentHistory.create({
             userId: author,
             endsAt,
         })
@@ -219,7 +219,7 @@ export default class PunishmentController extends Controller {
         message: Message,
         punishment: Punishment,
         mentions: FlaggedMention[],
-        punishmentHistory: Array<Parsed.Punishment | null>,
+        punishmentHistory: Array<Parsed.PunishmentHistory | null>,
         endsAt: number | true
     ) {
         const duration = endsAt === true ? 'the end of time' : `<t:${Math.round(endsAt / 1000)}>`

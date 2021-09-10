@@ -3,7 +3,7 @@ import Table from './models/Table';
 import BlockedUsersTable from './tables/BlockedUsers';
 import Bot from '../Bot';
 import { BotLogger } from '../utils/logger';
-import PunishmentsTable from './tables/Punishments';
+import PunishmentHistory from './tables/PunishmentHistory';
 
 type CustomizedConfig = PoolConfig & {
     schema: string;
@@ -22,7 +22,7 @@ export default class DatabaseManager {
 
     public readonly blockedUsers: BlockedUsersTable;
 
-    public readonly punishments: PunishmentsTable;
+    public readonly punishmentHistory: PunishmentHistory;
 
     constructor(config: CustomizedConfig) {
         const { schema, ...poolConfig } = config;
@@ -32,7 +32,7 @@ export default class DatabaseManager {
         this.escapedSchema = `"${schema}"`;
 
         this.blockedUsers = new BlockedUsersTable(this);
-        this.punishments = new PunishmentsTable(this);
+        this.punishmentHistory = new PunishmentHistory(this);
 
         this.logger = DatabaseManager.getLogger();
     }

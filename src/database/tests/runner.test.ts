@@ -1,3 +1,3 @@
 import './database.test';
 import './blockedUsers.test';
-import './punishments.test';
+import './punishmentHistory.test';

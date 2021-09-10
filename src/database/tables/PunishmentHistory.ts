@@ -4,69 +4,69 @@ import { Parsed, Results, ValidationState } from '../types';
 import DatabaseManager from '../database';
 import { InsertError, SelectError, UpdateError } from '../errors';
 
-type PunishmentObject = {
+type HistoryObject = {
     userId: number | string;
     endsAt: number | boolean;
     expiresAt?: number;
     active?: boolean;
 };
 
-export default class PunishmentsTable extends Table<
-    Results.DBPunishment,
-    Parsed.Punishment
+export default class PunishmentHistory extends Table<
+    Results.DBPunishmentHistory,
+    Parsed.PunishmentHistory
 > {
-    protected readonly accepted: Array<keyof Parsed.Punishment>;
+    protected readonly accepted: Array<keyof Parsed.PunishmentHistory>;
 
-    protected readonly nullables: Array<keyof Parsed.Punishment>;
+    protected readonly nullables: Array<keyof Parsed.PunishmentHistory>;
 
     protected readonly mappedKeys: {
-        [s in keyof Parsed.Punishment]: keyof Results.DBPunishment;
+        [s in keyof Parsed.PunishmentHistory]: keyof Results.DBPunishmentHistory;
     };
 
     constructor(manager: DatabaseManager) {
-        super(manager, 'punishments');
+        super(manager, 'punishment_history');
 
         this.nullables = ['expiresAt'];
         this.accepted = ['userId', 'endsAt', 'active', 'expiresAt'];
 
         this.mappedKeys = {
-            id: 'punishment_id',
-            userId: 'punishment_user_id',
-            active: 'punishment_active',
-            endsAt: 'punishment_ends_at',
-            expiresAt: 'punishment_expires_at',
-            createdAt: 'punishment_created_at',
+            id: 'history_id',
+            userId: 'history_user_id',
+            active: 'history_active',
+            endsAt: 'history_ends_at',
+            expiresAt: 'history_expires_at',
+            createdAt: 'history_created_at',
         };
     }
 
-    public async create(punishment: PunishmentObject): Promise<boolean>;
+    public async create(history: HistoryObject): Promise<boolean>;
 
     public async create(
         connection: PoolClient,
-        punishment: PunishmentObject
+        history: HistoryObject
     ): Promise<boolean>;
 
     public async create(
-        connection: PoolClient | PunishmentObject | undefined,
-        punishment?: PunishmentObject
+        connection: PoolClient | HistoryObject | undefined,
+        history?: HistoryObject
     ): Promise<boolean> {
         if (
-            typeof (connection as PunishmentObject).userId === 'number' ||
-            typeof (connection as PunishmentObject).userId === 'string'
+            typeof (connection as HistoryObject).userId === 'number' ||
+            typeof (connection as HistoryObject).userId === 'string'
         ) {
-            punishment = connection as PunishmentObject;
+            history = connection as HistoryObject;
             connection = undefined;
         }
 
         if (
-            typeof punishment?.userId !== 'number' &&
-            typeof punishment?.userId !== 'string'
+            typeof history?.userId !== 'number' &&
+            typeof history?.userId !== 'string'
         ) {
-            throw new InsertError('punishment object is not valid');
+            throw new InsertError('history object is not valid');
         }
 
         const values = [
-            punishment.userId,
+            history.userId,
             // Math.round(punishment.endsAt / 1000),
         ];
         const fields = [
@@ -74,18 +74,18 @@ export default class PunishmentsTable extends Table<
             // this.mappedKeys.endsAt
         ];
 
-        if (typeof punishment.endsAt === 'number') {
-            values.push(Math.round(punishment.endsAt / 1000));
+        if (typeof history.endsAt === 'number') {
+            values.push(Math.round(history.endsAt / 1000));
             fields.push(this.mappedKeys.endsAt);
         }
 
-        if (typeof punishment.expiresAt === 'number') {
-            values.push(Math.round(punishment.expiresAt / 1000));
+        if (typeof history.expiresAt === 'number') {
+            values.push(Math.round(history.expiresAt / 1000));
             fields.push(this.mappedKeys.expiresAt);
         }
 
-        if (typeof punishment.active === 'boolean') {
-            values.push(punishment.active ? 1 : 0);
+        if (typeof history.active === 'boolean') {
+            values.push(history.active ? 1 : 0);
             fields.push(this.mappedKeys.active);
         }
 
@@ -104,43 +104,43 @@ export default class PunishmentsTable extends Table<
 
     public async getByUserId(
         userId: string | number
-    ): Promise<Array<Parsed.Punishment | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory | null>>;
 
     public async getByUserId(
         userId: string | number,
         includeEnded: boolean
-    ): Promise<Array<Parsed.Punishment | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory | null>>;
 
     public async getByUserId(
         userId: string | number,
         includeEnded: boolean,
         includeExpired: boolean
-    ): Promise<Array<Parsed.Punishment | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory | null>>;
 
     public async getByUserId(
         connection: PoolClient,
         userId: string | number
-    ): Promise<Array<Parsed.Punishment | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory | null>>;
 
     public async getByUserId(
         connection: PoolClient,
         userId: string | number,
         includeEnded: boolean
-    ): Promise<Array<Parsed.Punishment | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory | null>>;
 
     public async getByUserId(
         connection: PoolClient,
         userId: string | number,
         includeEnded: boolean,
         includeExpired: boolean
-    ): Promise<Array<Parsed.Punishment | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory | null>>;
 
     public async getByUserId(
         connection: PoolClient | string | number | undefined,
         userId?: string | number | boolean,
         includeEnded = false,
         includeExpired = false
-    ): Promise<Array<Parsed.Punishment | null>> {
+    ): Promise<Array<Parsed.PunishmentHistory | null>> {
         if (typeof connection === 'string' || typeof connection === 'number') {
             includeExpired = includeEnded || false;
             includeEnded = (userId as boolean) || false;
@@ -160,7 +160,7 @@ export default class PunishmentsTable extends Table<
             filter += `AND (${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.expiresAt} IS NULL) `;
         }
 
-        const response = await this.query<Results.DBPunishment>(
+        const response = await this.query<Results.DBPunishmentHistory>(
             connection as PoolClient | undefined,
             `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.userId} = $1 ${filter};`,
             [userId]
@@ -171,16 +171,16 @@ export default class PunishmentsTable extends Table<
         return response.rows.map(this.parse);
     }
 
-    public async getAllLatest(): Promise<Array<Parsed.PunishmentWithCount | null>>;
+    public async getAllLatest(): Promise<Array<Parsed.PunishmentHistoryWithCount | null>>;
 
     public async getAllLatest(
         connection: PoolClient
-    ): Promise<Array<Parsed.PunishmentWithCount | null>>;
+    ): Promise<Array<Parsed.PunishmentHistoryWithCount | null>>;
 
     public async getAllLatest(
         connection?: PoolClient
-    ): Promise<Array<Parsed.PunishmentWithCount | null>> {
-        const response = await this.query<Results.DBPunishmentWithCount>(
+    ): Promise<Array<Parsed.PunishmentHistoryWithCount | null>> {
+        const response = await this.query<Results.DBPunishmentHistoryWithCount>(
             connection,
             `SELECT DISTINCT ON(${this.mappedKeys.userId}) *, (
                 SELECT count(*) as count FROM ${this.full} b
@@ -208,22 +208,22 @@ export default class PunishmentsTable extends Table<
         });
     }
 
-    public async getAllActive(): Promise<Array<Parsed.PunishmentWithCount | null>>;
+    public async getAllActive(): Promise<Array<Parsed.PunishmentHistoryWithCount | null>>;
 
     public async getAllActive(
         connection: PoolClient
-    ): Promise<Array<Parsed.PunishmentWithCount | null>>;
+    ): Promise<Array<Parsed.PunishmentHistoryWithCount | null>>;
 
     public async getAllActive(
         connection?: PoolClient
-    ): Promise<Array<Parsed.PunishmentWithCount | null>> {
+    ): Promise<Array<Parsed.PunishmentHistoryWithCount | null>> {
         // original query that didn't have the total number of active punishments
         const sql1 = `SELECT DISTINCT ON(${this.mappedKeys.userId}) * FROM ${this.full} WHERE
                 (${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.endsAt} IS NULL)
                 AND (${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.expiresAt} IS NULL)
             ORDER BY ${this.mappedKeys.userId}, ${this.mappedKeys.id} DESC;`;
 
-        const response = await this.query<Results.DBPunishmentWithCount>(
+        const response = await this.query<Results.DBPunishmentHistoryWithCount>(
             connection,
             `SELECT DISTINCT ON(${this.mappedKeys.userId}) *, (
                 SELECT count(*) as count FROM ${this.full} b
@@ -320,19 +320,19 @@ export default class PunishmentsTable extends Table<
         }
     }
 
-    protected parse(data?: Results.DBPunishment): Parsed.Punishment | null {
+    protected parse(data?: Results.DBPunishmentHistory): Parsed.PunishmentHistory | null {
         if (data) {
             return {
-                id: data.punishment_id,
-                active: data.punishment_active === 1,
-                userId: data.punishment_user_id,
-                endsAt: data.punishment_ends_at
-                    ? new Date(data.punishment_ends_at * 1000)
+                id: data.history_id,
+                active: data.history_active === 1,
+                userId: data.history_user_id,
+                endsAt: data.history_ends_at
+                    ? new Date(data.history_ends_at * 1000)
                     : null,
-                expiresAt: data.punishment_expires_at
-                    ? new Date(data.punishment_expires_at * 1000)
+                expiresAt: data.history_expires_at
+                    ? new Date(data.history_expires_at * 1000)
                     : null,
-                createdAt: new Date(data.punishment_created_at * 1000),
+                createdAt: new Date(data.history_created_at * 1000),
             };
         }
         return null;
