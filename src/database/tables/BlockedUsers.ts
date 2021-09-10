@@ -2,7 +2,7 @@ import { PoolClient } from 'pg';
 import Table from '../models/Table';
 import { Parsed, Results, ValidationState } from '../types';
 import DatabaseManager from '../database';
-import { InsertError, SelectError, UpdateError } from '../errors';
+import {DatabaseError, InsertError, SelectError, UpdateError} from '../errors';
 
 export default class BlockedUsersTable extends Table<
     Results.DBBlockedUser,
@@ -57,7 +57,7 @@ export default class BlockedUsersTable extends Table<
             ids
         ).catch((err) => new InsertError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rowCount > 0;
     }
@@ -92,7 +92,7 @@ export default class BlockedUsersTable extends Table<
             [id, timestamp as number]
         ).catch((err) => new UpdateError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rowCount === 1;
     }
@@ -120,7 +120,7 @@ export default class BlockedUsersTable extends Table<
             [id as number]
         ).catch((err) => new SelectError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         if (response.rows.length === 1) {
             const date = new Date();
@@ -162,7 +162,7 @@ export default class BlockedUsersTable extends Table<
             ids
         ).catch((err) => new SelectError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rows.map(this.parse);
     }

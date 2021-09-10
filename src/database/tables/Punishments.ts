@@ -2,7 +2,7 @@ import Table from "../models/Table";
 import {Parsed, Results, ValidationState} from "../types";
 import DatabaseManager from "../database";
 import {PoolClient} from "pg";
-import {InsertError, SelectError} from "../errors";
+import {DatabaseError, InsertError, SelectError} from "../errors";
 
 type PunishmentObject = Omit<Parsed.Punishment, 'id'|'active'|'length'> & {
     length?: number;
@@ -86,7 +86,7 @@ export default class Punishments extends Table<
             values
         ).catch((err) => new InsertError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rowCount > 0;
     }
@@ -98,7 +98,7 @@ export default class Punishments extends Table<
             `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.active} = 1;`
         ).catch((err) => new SelectError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rows.map(this.parse)
     }

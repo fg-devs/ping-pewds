@@ -2,7 +2,7 @@ import { PoolClient } from 'pg';
 import Table from '../models/Table';
 import { Parsed, Results, ValidationState } from '../types';
 import DatabaseManager from '../database';
-import { InsertError, SelectError, UpdateError } from '../errors';
+import {DatabaseError, InsertError, SelectError, UpdateError} from '../errors';
 
 type HistoryObject = {
     userId: number | string;
@@ -97,7 +97,7 @@ export default class PunishmentHistory extends Table<
             values
         ).catch((err) => new InsertError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rowCount > 0;
     }
@@ -166,7 +166,7 @@ export default class PunishmentHistory extends Table<
             [userId]
         ).catch((err) => new SelectError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rows.map(this.parse);
     }
@@ -194,7 +194,7 @@ export default class PunishmentHistory extends Table<
                 ORDER BY ${this.mappedKeys.userId}, ${this.mappedKeys.id} DESC;`
         ).catch((err) => new SelectError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rows.map((item) => {
             const parsed = this.parse(item);
@@ -235,7 +235,7 @@ export default class PunishmentHistory extends Table<
                     AND (a.${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR a.${this.mappedKeys.expiresAt} IS NULL);`
         ).catch((err) => new SelectError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rows.map((item) => {
             const parsed = this.parse(item);
@@ -274,7 +274,7 @@ export default class PunishmentHistory extends Table<
             [id, active ? 1 : 0]
         ).catch((err) => new UpdateError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rowCount > 0;
     }
