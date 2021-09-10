@@ -35,7 +35,7 @@ export class PingableUserController extends Controller {
      */
     public async init(): Promise<void> {
         const db = this.bot.getDatabase();
-        const users = await db.blockedUsers.getAll();
+        const users = await db.monitoredUsers.getAll();
         users.forEach((user) =>
             user ? (this.usersLastMessage[`${user.id}`] = user.lastMessage) : undefined
         );
@@ -153,7 +153,7 @@ I'll notify you again after \`${minutesToReadable(timeout)}\` have passed since 
         const action = () =>
             this.bot
                 .getDatabase()
-                .blockedUsers.updateLastMessage(
+                .monitoredUsers.updateLastMessage(
                     Number.parseInt(snowflake, 10),
                     timestamp + timeout * 1000 * 60
                 )

@@ -36,7 +36,7 @@ type DefaultPunishmentProps = {
 }
 
 export namespace Results {
-    export type DBBlockedUser = {
+    export type DBMonitoredUser = {
         user_id: number;
         user_last_message: number;
     };
@@ -67,7 +67,7 @@ export namespace Results {
 }
 
 export namespace Parsed {
-    export type BlockedUser = {
+    export type MonitoredUser = {
         id: number;
         lastMessage: number;
     };
@@ -90,10 +90,10 @@ export namespace Parsed {
 
 export type ValueObject = Array<string | number | boolean>;
 
-export type DBTable = Results.DBBlockedUser | Results.DBPunishmentHistory;
+export type DBTable = Results.DBMonitoredUser | Results.DBPunishmentHistory | Results.DBPunishment;
 // | Results.NextTable
 
-export type DBParsed = Parsed.BlockedUser | Parsed.PunishmentHistory;
+export type DBParsed = Parsed.MonitoredUser | Parsed.PunishmentHistory | Parsed.Punishment;
 // | Parsed.NextTable
 
 export namespace Tables {

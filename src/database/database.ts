@@ -2,7 +2,7 @@ import { Pool, PoolConfig, DatabaseError, PoolClient } from 'pg';
 import Table from './models/Table';
 import Bot from '../Bot';
 import { BotLogger } from '../utils/logger';
-import BlockedUsersTable from './tables/BlockedUsers';
+import MonitoredUsersTable from './tables/MonitoredUsers';
 import PunishmentHistory from './tables/PunishmentHistory';
 import Punishments from "./tables/Punishments";
 
@@ -21,7 +21,7 @@ export default class DatabaseManager {
 
     private readonly logger: BotLogger;
 
-    public readonly blockedUsers: BlockedUsersTable;
+    public readonly monitoredUsers: MonitoredUsersTable;
 
     public readonly punishmentHistory: PunishmentHistory;
 
@@ -34,7 +34,7 @@ export default class DatabaseManager {
         this.schema = schema;
         this.escapedSchema = `"${schema}"`;
 
-        this.blockedUsers = new BlockedUsersTable(this);
+        this.monitoredUsers = new MonitoredUsersTable(this);
         this.punishmentHistory = new PunishmentHistory(this);
         this.punishments = new Punishments(this);
 

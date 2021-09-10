@@ -21,24 +21,24 @@ describe('Start standard blocked users tests', async function () {
     });
 
     it('should initialize one blocking user', async function () {
-        const response = await db.blockedUsers.initializeUsers(1111);
+        const response = await db.monitoredUsers.initializeUsers(1111);
         assert.isTrue(response);
     });
 
     it('should initialize two blocking users', async function () {
-        const response = await db.blockedUsers.initializeUsers([2222, 3333]);
+        const response = await db.monitoredUsers.initializeUsers([2222, 3333]);
         assert.isTrue(response);
     });
 
     it('should initialize 100 blocking users', async function () {
         const users = [];
         for (let i = 100; i < 200; i++) users.push(i);
-        const response = await db.blockedUsers.initializeUsers(users);
+        const response = await db.monitoredUsers.initializeUsers(users);
         assert.isTrue(response);
     });
 
     it('should set last ping for id 1111', async function () {
-        const response = await db.blockedUsers.updateLastMessage(
+        const response = await db.monitoredUsers.updateLastMessage(
             1111,
             new Date().getTime()
         );
@@ -46,12 +46,12 @@ describe('Start standard blocked users tests', async function () {
     });
 
     it('should get an absent last ping', async function () {
-        const response = await db.blockedUsers.getLastMessage(2222);
+        const response = await db.monitoredUsers.getLastMessage(2222);
         assert.equal(response.getFullYear(), 1969);
     });
 
     it('should get last ping of id 1111', async function () {
-        const response = await db.blockedUsers.getLastMessage(1111);
+        const response = await db.monitoredUsers.getLastMessage(1111);
         assert.equal(response.getFullYear(), new Date().getFullYear());
     });
 });
