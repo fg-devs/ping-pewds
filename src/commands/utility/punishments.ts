@@ -9,7 +9,7 @@ import {minutesToReadable} from "../../utils";
 
 @ApplyOptions<SubCommandPluginCommandOptions>({
     name: 'punishments',
-    description: '',
+    description: 'Show, create, and remove punishments for pinging them from users and roles',
     preconditions: ['GuildOnly'],
     subCommands: [
         {
@@ -28,6 +28,15 @@ import {minutesToReadable} from "../../utils";
     ]
 })
 export default class Punishments extends SubCommandPluginCommand {
+
+    private static hasPermission(message: Message) {
+        return message.member?.permissions.has('ADMINISTRATOR') || false;
+    }
+
+    public async run(message: Message, args: Args, context: CommandContext) {
+        if (!Punishments.hasPermission(message)) return;
+        await super.run(message, args, context);
+    }
 
     public async list(message: Message): Promise<void> {
         console.log('list', message)
