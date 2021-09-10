@@ -185,6 +185,13 @@
     colorette "^1.3.0"
     tslib "^2.3.1"
 
+"@sapphire/plugin-subcommands@next":
+  version "2.0.0-next.e24c125.0"
+  resolved "https://registry.yarnpkg.com/@sapphire/plugin-subcommands/-/plugin-subcommands-2.0.0-next.e24c125.0.tgz#c956e210f61746f56fde043a4b72297c102199cf"
+  integrity sha512-+gOIorZQAFoUP4p7D5JAJDLLOK0bux3qdTCdRZHZIIeXwRb8KO371uVEAj9XgRAbbW3y5NT4wvCbsxc+jqU9/A==
+  dependencies:
+    tslib "^2.3.1"
+
 "@sapphire/ratelimits@^2.0.1":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@sapphire/ratelimits/-/ratelimits-2.0.1.tgz#e2195d6d93cbb19ed4f54f5078973a7c60e1a6bd"

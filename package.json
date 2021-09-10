@@ -28,6 +28,7 @@
     "@sapphire/framework": "next",
     "@sapphire/plugin-logger": "next",
     "@sapphire/decorators": "next",
+    "@sapphire/plugin-subcommands": "next",
     "async-mutex": "^0.3.1",
     "discord.js": "13.1.0",
     "js-yaml": "^4.1.0",
