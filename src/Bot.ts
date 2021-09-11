@@ -22,7 +22,7 @@ class Bot extends SapphireClient {
 
     constructor() {
         super({
-            intents: ['GUILDS', 'GUILD_MEMBERS', 'GUILD_MESSAGE_REACTIONS', 'GUILD_MESSAGES'],
+            intents: ['GUILDS', 'GUILD_MESSAGE_REACTIONS', 'GUILD_MESSAGES'],
             defaultPrefix: CONFIG.bot.prefix,
             id: CONFIG.bot.token,
             caseInsensitiveCommands: true,
