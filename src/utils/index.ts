@@ -1,7 +1,8 @@
 import {GuildMember, Message} from "discord.js";
 import {CONFIG} from "../globals";
+import {TargetType} from "../database/types";
 
-export function minutesToReadable(minutes?: number) {
+export function minutesToReadable(minutes?: number | null) {
     if (typeof minutes !== 'number') {
         return '0 minutes'
     }
@@ -26,6 +27,12 @@ export function minutesToReadable(minutes?: number) {
         str = `${Math.floor(days)} days, ` + str;
     }
     return str;
+}
+
+export function parsedUserOrRole(target?: TargetType, key?: string) {
+    if (!(target && key))
+        return 'N/A'
+    return `<@${target === 'role' ? '&' : ''}${key}>`
 }
 
 export function sentByAuthorizedUser(author?: GuildMember | null) {
