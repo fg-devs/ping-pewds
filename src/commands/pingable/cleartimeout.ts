@@ -16,9 +16,10 @@ export default class ClearTimeout extends Command {
      * @param message
      * @param ownerOverride
      */
-    public async hasPermission(message: Message, ownerOverride?: boolean): Promise<boolean> {
+    public hasPermission(message: Message, ownerOverride?: boolean): boolean {
         const bot = this.container.client as Bot;
-        return await bot.getPunishmentController().isMonitoredUser(message) || ownerOverride === true;
+        const author = message.guild?.members.resolve(message.author.id);
+        return bot.getPunishmentController().isMonitoredMember(author) || ownerOverride === true;
     }
 
     /**
@@ -26,7 +27,7 @@ export default class ClearTimeout extends Command {
      * @param msg
      */
     public async run(msg: Message): Promise<null> {
-        if (!await this.hasPermission(msg)) return null;
+        if (!this.hasPermission(msg)) return null;
         const author = msg.author.id;
         const client = this.container.client as Bot;
 

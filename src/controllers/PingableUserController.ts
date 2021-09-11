@@ -47,8 +47,9 @@ export class PingableUserController extends Controller {
      */
     public async handleMessage(message: Message): Promise<boolean> {
         const punishmentController = this.bot.getPunishmentController();
+        const author = message.guild?.members.resolve(message.author.id);
         if (
-            !await punishmentController.isMonitoredUser(message)
+            !punishmentController.isMonitoredMember(author)
             || message.author.bot
             || message.content.startsWith(CONFIG.bot.prefix)
             || CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0

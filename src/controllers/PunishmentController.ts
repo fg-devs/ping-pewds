@@ -1,4 +1,4 @@
-import { Guild, Message, MessageEmbedOptions } from 'discord.js';
+import {Guild, GuildMember, Message, MessageEmbedOptions} from 'discord.js';
 import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
@@ -175,14 +175,12 @@ export default class PunishmentController extends Controller {
         );
     }
 
-    public async isMonitoredUser(message: Message): Promise<boolean> {
-        const author = message.author.id;
-        const member = message.member;
+    public isMonitoredMember(author?: GuildMember | null): boolean {
         const hasMonitoredRole = Object.keys(this.punishments.role)
             .findIndex((role) => (
-                member?.roles.resolve(role) !== null
+                author?.roles.resolve(role) !== null
             )) >= 0
-        const isMonitoredUser = this.punishments.user[author] instanceof Array;
+        const isMonitoredUser = this.punishments.user[author?.id || 0] instanceof Array;
 
         return isMonitoredUser || hasMonitoredRole;
     }
