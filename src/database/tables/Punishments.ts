@@ -1,5 +1,5 @@
 import Table from "../models/Table";
-import {Parsed, Results, Tables, ValidationState} from "../types";
+import {Nullable, Parsed, Results, Tables, ValidationState} from "../types";
 import DatabaseManager from "../database";
 import {PoolClient} from "pg";
 import {DatabaseError, InsertError, SelectError} from "../errors";
@@ -144,11 +144,12 @@ export default class Punishments extends Table<
         return {
             id: data.punishment_id,
             active: data.punishment_active === 1,
+            index: data.punishment_index,
             type: data.punishment_type,
             lenient: data.punishment_lenient === 1,
             length: data.punishment_length,
             target: data.punishment_target,
-            targetKey: data.punishment_target_key,
-        } as Parsed.Punishment
+            targetKey: data.punishment_target_key as never,
+        }
     }
 }
