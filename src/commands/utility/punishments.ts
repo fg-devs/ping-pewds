@@ -1,11 +1,11 @@
 import {ApplyOptions} from "@sapphire/decorators";
 import {Args, Command, CommandContext, CommandOptions} from "@sapphire/framework";
 import {SubCommandPluginCommand, SubCommandPluginCommandOptions} from "@sapphire/plugin-subcommands";
-import {Message, MessageEmbed, MessageEmbedOptions, Role, User} from "discord.js";
+import {Message, MessageEmbedOptions, User} from "discord.js";
 import Bot from "../../Bot";
-import {Nullable, Parsed, PunishmentType, Tables, TargetType} from "../../database/types";
+import {Parsed, Tables, TargetType} from "../../database/types";
 import {InsertError, DatabaseError} from "../../database/errors";
-import {minutesToReadable, parsedUserOrRole, sentByAuthorizedUser} from "../../utils";
+import {getRoleOrUser, minutesToReadable, parsedUserOrRole, sentByAuthorizedUser} from "../../utils";
 import {CONFIG} from "../../globals";
 
 const disclaimer = `*By entering the above command, you will receive an embed that will show you the full structure of the command.*`
@@ -122,7 +122,6 @@ Run the command \`${CONFIG.bot.prefix}punishments create\` to learn how to creat
             });
 
         if (parsedArgs === null) {
-            // TODO send embed with command structure
             await message.channel.send({
                 embeds: [ Punishments.CREATE_PUNISHMENT_EMBED ],
             });
@@ -144,16 +143,16 @@ Run the command \`${CONFIG.bot.prefix}punishments create\` to learn how to creat
                 content: `An error occurred while trying to create the punishment.
 Please notify a developer so that we can check the internal logs`
             })
-            this.container.logger.info(created)
+            this.container.logger.error(created)
             return;
         }
 
         await message.reply({
             allowedMentions: { users: [], roles: [], repliedUser: false },
-            content: `Successfully added punishment to ${parsedArgs.target} ${Punishments.getRoleOrUser(parsedArgs)}.
+            content: `Successfully added punishment to ${parsedArgs.target} ${getRoleOrUser(parsedArgs)}.
 \`\`\`Punishment Type: ${parsedArgs.type}
 Punishment Target: ${parsedArgs.target}
-Punishment Target Key: ${Punishments.getRoleOrUser(parsedArgs)}
+Punishment Target Key: ${getRoleOrUser(parsedArgs)}
 Punishment is lenient: ${parsedArgs.lenient}
 Punishment length ${minutesToReadable(parsedArgs.length)}
 \`\`\``
@@ -198,12 +197,43 @@ Usage: \`${CONFIG.bot.prefix}punishments for (@user|User ID)\``
         console.log(targetUser, punishments);
     }
 
-    private static getRoleOrUser(args: Tables.Punishments.CreateObject) {
-        if (args.target === 'role')
-            return `<@&${args.targetKey}>`
-        if (args.target === 'user')
-            return `<@${args.targetKey}>`;
-        return args.targetKey;
+    public async remove(message: Message, args: Args): Promise<void> {
+        const parsedArgs = await Punishments.parseRemoveArgs(args)
+            .catch((err) => {
+                console.error(err)
+                return null
+            });
+
+        if (parsedArgs === null) {
+            await message.channel.send({
+                embeds: [ Punishments.REMOVE_PUNISH_EMBED ],
+            });
+            return;
+        }
+
+        const bot = this.container.client as Bot;
+        const removed = await bot.getDatabase().punishments.remove({
+            index: parsedArgs.index,
+            target: parsedArgs.target,
+            targetKey: parsedArgs.targetKey,
+            lenient: parsedArgs.lenient,
+        }).catch((err: InsertError) => err);
+
+        if (removed instanceof DatabaseError) {
+            message.channel.send({
+                content: `An error occurred while trying to remove the punishment.
+Please notify a developer so that we can check the internal logs`
+            })
+            this.container.logger.error(removed)
+            return;
+        }
+
+        await message.reply({
+            allowedMentions: { users: [], roles: [], repliedUser: false },
+            content: `Successfully removed punishment for ${parsedArgs.target} ${getRoleOrUser(parsedArgs)}.`
+        })
+
+        await bot.getPunishmentController().synchronize();
     }
 
     private static async parseCreateArgs(argsObj: Args): Promise<Tables.Punishments.CreateObject> {
@@ -253,10 +283,48 @@ Usage: \`${CONFIG.bot.prefix}punishments for (@user|User ID)\``
         }
     }
 
+    private static async parseRemoveArgs(argsObj: Args): Promise<Tables.Punishments.RemoveObject> {
+        const numeric = /^(\.|\d)+$/;
+        const mention = /^<(@&?!?)(.*)>$/
+        const argsStr = (await argsObj.rest('string') || '').toLowerCase()
+        let [
+            index, target, targetKey, lenient
+        ]: any[] = argsStr.split(/\s+/);
+
+        if (index.match(numeric) === null)
+            throw new Error('index must be numeric')
+        index = Number.parseInt(index);
+
+        const requiresTargetKey = ['user', 'role'].indexOf(target);
+        if (requiresTargetKey === -1)
+            throw new Error('punishment target is invalid')
+
+        const mentionedMatch = targetKey.match(mention)
+        if (targetKey.match(numeric) === null && mentionedMatch === null)
+            throw new Error('punishment target key must be numeric')
+
+        if (mentionedMatch !== null) {
+            // replace the mention string with just the ID
+            targetKey = mentionedMatch[2] as string;
+        }
+
+        if (['1', '0', 'yes', 'no', 'true', 'false'].indexOf(lenient.toLowerCase()) === -1)
+            throw new Error('punishment leniency must be boolean(ish)')
+        lenient = (['1', 'yes', 'true'].indexOf(lenient) >= 0)
+
+        return {
+            index,
+            target,
+            targetKey,
+            lenient
+        }
+    }
+
     private static LIST_PUNISHMENTS_EMBED = (punishments: Parsed.Punishment[]): MessageEmbedOptions => {
         return ({
             title: `Punishments for pinging ${punishments[0].target}`,
             description: 'The following punishments are in order based on their **Priority Index**. This is the order in which punishments are handed out.',
+            color: 'ORANGE',
             fields: [
                 {
                     name: 'Applies to:',
@@ -292,6 +360,7 @@ Usage: \`${CONFIG.bot.prefix}punishments for (@user|User ID)\``
             title: `Ping Punishments for ${user.username}`,
             description: `The following is a list of punishments in order in which they were given. This includes expired and completed punishments\n`
             + (history.length > 0 ?  '' : '\n**There is no punishment history.**'),
+            color: 'RED',
             fields: history.map((item, idx) => ({
                 name: `Punishment #${idx + 1} ${isPast(item) ? '___*No Longer Active*___' : ''}`,
                 value: `Punishment Given at <t:${item.createdAt.getTime() / 1000}>
@@ -304,7 +373,8 @@ Punishment Expires at ${expiresTime(item)}`
     private static CREATE_PUNISHMENT_EMBED: MessageEmbedOptions = {
         title: 'How To Create A Punishment',
         description: `The following command is the structure you should use when creating a punishment via this command
-\`!punishments create [PriorityIndex] [Type] [Target] [TargetKey] [Lenient] [Length?]\``,
+\`${CONFIG.bot.prefix}punishments create [PriorityIndex] [Type] [Target] [TargetKey] [Lenient] [Length?]\``,
+        color: 'GREEN',
         fields: [
             {
                 name: 'Priority Index',
@@ -336,6 +406,36 @@ Punishment Expires at ${expiresTime(item)}`
         },
     }
 
+    private static REMOVE_PUNISH_EMBED: MessageEmbedOptions = {
+        title: 'How To Remove A Punishment',
+        description: `In order to remove a punishment, you must know **four (4)** pieces of information about the punishment.
+        The following command is the structure you should use when removing a punishment via this command.
+\`${CONFIG.bot.prefix}punishments remove [PriorityIndex] [Target] [TargetKey] [Lenient]\`
+**Please Note:** removing a punishment does **not** effect punishment history at all.`,
+        color: 'RED',
+        fields: [
+            {
+                name: 'Priority Index',
+                value: '`Numeric, [0 - 10000]`'
+            },
+            {
+                name: 'Target',
+                value: '`Role | User`'
+            },
+            {
+                name: 'Target Key',
+                value: '`@user | @role | Role ID | User ID`'
+            },
+            {
+                name: 'Lenient',
+                value: '`yes | no | true | false`'
+            }
+        ],
+        footer: {
+            text: 'If you have any questions, get in touch with the developers.'
+        },
+    }
+
     private static HELP_EMBED: MessageEmbedOptions = {
         title: `${CONFIG.bot.prefix}punishments Walkthrough`,
         description: `There are a few commands to be aware of.
@@ -348,10 +448,10 @@ Returns all punishments that the selected user has received by the bot.
 \`\`\`${CONFIG.bot.prefix}punishments for @user\`\`\`
 Allows you to create new punishments. 
 ${disclaimer}
-\`\`\`${CONFIG.bot.prefix}punishments (create|add) [options]\`\`\`
+\`\`\`${CONFIG.bot.prefix}punishments create [options]\`\`\`
 Allows you to remove an existing punishment. 
 ${disclaimer}
-\`\`\`${CONFIG.bot.prefix}punishments (remove|delete) [options]\`\`\`
-`,
+\`\`\`${CONFIG.bot.prefix}punishments remove [options]\`\`\``,
+        color: 'YELLOW',
     }
 }
