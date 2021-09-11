@@ -2,7 +2,7 @@ import { Message } from 'discord.js';
 import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
-import {TargetType, FlaggedMention} from "./PunishmentController";
+import {FlaggedMention} from "./PunishmentController";
 import {sentByAuthorizedUser} from "../utils";
 
 export class PingController extends Controller {
