@@ -1,7 +1,7 @@
+import { PoolClient } from 'pg';
 import Table from '../models/Table';
 import { Parsed, Results, Tables, ValidationState } from '../types';
 import DatabaseManager from '../database';
-import { PoolClient } from 'pg';
 import { DatabaseError, DeleteError, InsertError, SelectError } from '../errors';
 
 type CreateObject = Tables.Punishments.CreateObject;
@@ -43,10 +43,12 @@ export default class Punishments extends Table<Results.DBPunishment, Parsed.Puni
     }
 
     public async create(punishment: CreateObject): Promise<boolean>;
+
     public async create(
         connection: PoolClient | undefined,
         punishment: CreateObject
     ): Promise<boolean>;
+
     public async create(
         connection: PoolClient | CreateObject | undefined,
         punishment?: CreateObject
@@ -121,10 +123,12 @@ export default class Punishments extends Table<Results.DBPunishment, Parsed.Puni
     }
 
     public async remove(punishmment: RemoveObject): Promise<boolean>;
+
     public async remove(
         connection: PoolClient | undefined,
         punishment: RemoveObject
     ): Promise<boolean>;
+
     public async remove(
         connection: PoolClient | RemoveObject | undefined,
         punishment?: RemoveObject

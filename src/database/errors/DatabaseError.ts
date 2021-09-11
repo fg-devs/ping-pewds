@@ -12,27 +12,45 @@ export default class DatabaseError implements RippedDBError {
     public static SELECT_ERROR = 'Select Error';
 
     public readonly errorMessage?: string;
+
     public readonly errorName?: string;
 
     public message: string;
 
     public code: string | undefined;
+
     public column: string | undefined;
+
     public constraint: string | undefined;
+
     public dataType: string | undefined;
+
     public detail: string | undefined;
+
     public file: string | undefined;
+
     public hint: string | undefined;
+
     public internalPosition: string | undefined;
+
     public internalQuery: string | undefined;
+
     public readonly length: number | undefined;
+
     public line: string | undefined;
+
     public name: string;
+
     public position: string | undefined;
+
     public routine: string | undefined;
+
     public schema: string | undefined;
+
     public severity: string | undefined;
+
     public table: string | undefined;
+
     public where: string | undefined;
 
     constructor(error?: Error | string, message?: string) {

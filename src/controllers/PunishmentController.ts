@@ -87,7 +87,7 @@ export default class PunishmentController extends Controller {
 
     public async punish(message: Message, mentions: FlaggedMention[]): Promise<void> {
         const author = message.author.id;
-        const guild = message.guild;
+        const { guild } = message;
         if (guild === null) {
             throw new Error('guild not found.');
         }
@@ -111,21 +111,13 @@ export default class PunishmentController extends Controller {
                 return guildMember.roles.resolve(role) !== null;
             }) >= 0;
 
-        let punishments: Punishment[] = [];
+        const punishments: Punishment[] = [];
 
         for (const mention of mentions) {
             if (punishments.length > 0) break;
-            punishments.push(
-                ...this.getPunishments(
-                    mention.type,
-                    hasLenientRole,
-                    mention.type === 'user'
-                        ? mention.user
-                        : mention.type === 'role' && mention.role
-                        ? mention.role
-                        : undefined
-                )
-            );
+            let key = mention.type === 'user' ? mention.user : undefined;
+            if (typeof key === 'undefined' && mention.type === 'role') key = mention.role;
+            punishments.push(...this.getPunishments(mention.type, hasLenientRole, key));
         }
 
         if (punishments.length === 0 && hasLenientRole) {
@@ -174,7 +166,7 @@ export default class PunishmentController extends Controller {
         mentions: FlaggedMention[],
         punishmentHistory: Array<Parsed.PunishmentHistory | null>,
         endsAt: number | true
-    ) {
+    ): Promise<void> {
         const duration =
             endsAt === true ? 'the end of time' : `<t:${Math.round(endsAt / 1000)}>`;
         let description: string | undefined;
@@ -189,6 +181,8 @@ export default class PunishmentController extends Controller {
             case 'kick':
                 description = `You've been kicked for pinging the following people.`;
                 break;
+            default:
+                description = 'Unknown punishment given.';
         }
 
         const embed: MessageEmbedOptions = {
@@ -226,7 +220,7 @@ export default class PunishmentController extends Controller {
         });
 
         // skip the actual punishment for testing
-        if (CONFIG.bot.dryrun) return true;
+        if (CONFIG.bot.dryrun) return;
 
         switch (punishment.type) {
             case 'ban':
@@ -235,8 +229,9 @@ export default class PunishmentController extends Controller {
                 });
                 break;
             case 'mute':
-                const member = message.guild?.members.resolve(message.author);
-                member?.roles.add(CONFIG.bot.muteRole);
+                message.guild?.members
+                    .resolve(message.author)
+                    ?.roles.add(CONFIG.bot.muteRole);
                 break;
             default:
                 this.getLogger().error(`Unhandled punishment type ${punishment.type}`);
@@ -249,15 +244,15 @@ export default class PunishmentController extends Controller {
         return false;
     }
 
-    public getBlockedUsers() {
+    public getBlockedUsers(): string[] {
         return Object.keys(this.punishments.user);
     }
 
-    public getBlockedRoles() {
+    public getBlockedRoles(): string[] {
         return Object.keys(this.punishments.role);
     }
 
-    public getPunishment(target: TargetType, key: string) {
+    public getPunishment(target: TargetType, key: string): Punishment[] | null {
         if (
             typeof this.punishments[target][key] === 'undefined' ||
             this.punishments[target][key].length === 0
@@ -291,6 +286,7 @@ export default class PunishmentController extends Controller {
         if (typeof punishments === 'undefined') return nextCache;
 
         punishments.forEach((punishment) => {
+            // eslint-disable-next-line
             switch (punishment.target) {
                 case 'user':
                     if (typeof nextCache.user[punishment.targetKey] === 'undefined')

@@ -1,8 +1,8 @@
 import { Command, PieceContext, Args, CommandOptions } from '@sapphire/framework';
 import { Message } from 'discord.js';
+import { ApplyOptions } from '@sapphire/decorators';
 import Bot from '../../Bot';
 import { CONFIG } from '../../globals';
-import { ApplyOptions } from '@sapphire/decorators';
 
 @ApplyOptions<CommandOptions>({
     name: 'extend',

@@ -10,9 +10,9 @@ import { Message } from 'discord.js';
     enabled: true,
 })
 export default class PingCommand extends Command {
-    async run(msg: Message) {
+    async run(msg: Message): Promise<void> {
         const m = await msg.channel.send('Ping?');
-        return m.edit(
+        await m.edit(
             `Pong! Bot Latency ${Math.round(
                 this.container.client.ws.ping
             )}ms. API Latency ${m.createdTimestamp - msg.createdTimestamp}ms.`

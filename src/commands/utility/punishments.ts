@@ -43,12 +43,16 @@ const disclaimer = `*By entering the above command, you will receive an embed th
     ],
 })
 export default class Punishments extends SubCommandPluginCommand {
-    private static hasPermission(message: Message) {
+    private static hasPermission(message: Message): boolean {
         const author = message.guild?.members.resolve(message.author.id);
         return sentByAuthorizedUser(author);
     }
 
-    public async run(message: Message, args: Args, context: CommandContext) {
+    public async run(
+        message: Message,
+        args: Args,
+        context: CommandContext
+    ): Promise<void> {
         if (!Punishments.hasPermission(message)) return;
         await super.run(message, args, context);
     }
@@ -110,7 +114,7 @@ Run the command \`${CONFIG.bot.prefix}punishments create\` to learn how to creat
 
         let first = true;
         do {
-            let subsetEmbeds = embeds.splice(0, 10);
+            const subsetEmbeds = embeds.splice(0, 10);
             await message.channel.send({
                 content: first
                     ? `Here is a list of punishments that can be given out, broken down by user and role.`
@@ -195,7 +199,7 @@ Usage: \`${CONFIG.bot.prefix}punishments for (@user|User ID)\``,
 
         let first = true;
         do {
-            let subsetEmbeds = punishments.splice(0, 10);
+            const subsetEmbeds = punishments.splice(0, 10);
             message.channel.send({
                 allowedMentions: { users: [] },
                 content: first
@@ -258,11 +262,12 @@ Please notify a developer so that we can check the internal logs`,
         const numeric = /^(\.|\d)+$/;
         const mention = /^<(@&?!?)(.*)>$/;
         const argsStr = ((await argsObj.rest('string')) || '').toLowerCase();
+        // eslint-disable-next-line
         let [index, type, target, targetKey, lenient, length]: any[] =
             argsStr.split(/\s+/);
 
         if (index.match(numeric) === null) throw new Error('index must be numeric');
-        index = Number.parseInt(index);
+        index = Number.parseInt(index, 10);
 
         if (['ban', 'kick', 'mute'].indexOf(type) === -1)
             throw new Error('punishment type is invalid');
@@ -304,10 +309,11 @@ Please notify a developer so that we can check the internal logs`,
         const numeric = /^(\.|\d)+$/;
         const mention = /^<(@&?!?)(.*)>$/;
         const argsStr = ((await argsObj.rest('string')) || '').toLowerCase();
+        // eslint-disable-next-line
         let [index, target, targetKey, lenient]: any[] = argsStr.split(/\s+/);
 
         if (index.match(numeric) === null) throw new Error('index must be numeric');
-        index = Number.parseInt(index);
+        index = Number.parseInt(index, 10);
 
         const requiresTargetKey = ['user', 'role'].indexOf(target);
         if (requiresTargetKey === -1) throw new Error('punishment target is invalid');
@@ -396,9 +402,9 @@ Please notify a developer so that we can check the internal logs`,
             item.endsAt ? Date.now() > item.endsAt.getTime() : false;
         return {
             title: `Ping Punishments for ${user.username}`,
-            description:
-                `The following is a list of punishments in order in which they were given. This includes expired and completed punishments\n` +
-                (history.length > 0 ? '' : '\n**There is no punishment history.**'),
+            description: `The following is a list of punishments in order in which they were given. This includes expired and completed punishments\n${
+                history.length > 0 ? '' : '\n**There is no punishment history.**'
+            }`,
             color: 'RED',
             fields: history.map((item, idx) => ({
                 name: `Punishment #${idx + 1} ${
