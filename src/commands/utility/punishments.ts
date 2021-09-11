@@ -5,7 +5,7 @@ import {Message, MessageEmbed, MessageEmbedOptions} from "discord.js";
 import Bot from "../../Bot";
 import {Nullable, PunishmentType, Tables, TargetType} from "../../database/types";
 import {InsertError, DatabaseError} from "../../database/errors";
-import {minutesToReadable} from "../../utils";
+import {minutesToReadable, sentByAuthorizedUser} from "../../utils";
 
 @ApplyOptions<SubCommandPluginCommandOptions>({
     name: 'punishments',
@@ -30,7 +30,8 @@ import {minutesToReadable} from "../../utils";
 export default class Punishments extends SubCommandPluginCommand {
 
     private static hasPermission(message: Message) {
-        return message.member?.permissions.has('ADMINISTRATOR') || false;
+        const author = message.guild?.members.resolve(message.author.id);
+        return sentByAuthorizedUser(author)
     }
 
     public async run(message: Message, args: Args, context: CommandContext) {
@@ -101,7 +102,7 @@ Punishment length ${minutesToReadable(parsedArgs.length)}
     private static async parseCreateArgs(argsObj: Args): Promise<Tables.Punishments.CreateObject> {
         const numeric = /^(\.|\d)+$/;
         const mention = /^<(@&?!?)(.*)>$/
-        const argsStr = (await argsObj.rest('string') || '')
+        const argsStr = (await argsObj.rest('string') || '').toLowerCase()
         let [
             index, type, target, targetKey, lenient, length
         ]: any[] = argsStr.split(/\s+/);
