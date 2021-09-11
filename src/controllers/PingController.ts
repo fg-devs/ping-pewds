@@ -3,6 +3,7 @@ import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
 import {TargetType, FlaggedMention} from "./PunishmentController";
+import {sentByAuthorizedUser} from "../utils";
 
 export class PingController extends Controller {
     constructor(bot: Bot) {
@@ -15,9 +16,13 @@ export class PingController extends Controller {
      * telling the user to not ping this user.
      */
     public async handleMessage(message: Message): Promise<boolean> {
+        const punishmentController = this.bot.getPunishmentController();
+        const author = message.guild?.members.resolve(message.author.id);
+
         if (
-            message.author.bot ||
-            CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0
+            message.author.bot
+            || CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0
+            || sentByAuthorizedUser(author)
         )
             return false;
 
@@ -50,7 +55,6 @@ export class PingController extends Controller {
             })
             .catch(this.handleError);
 
-        const punishmentController = this.bot.getPunishmentController();
         await punishmentController.punish(message, flaggedMentions);
 
         if (notification) {
