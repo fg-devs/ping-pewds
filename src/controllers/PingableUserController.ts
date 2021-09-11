@@ -3,7 +3,7 @@ import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
 import Timeout = NodeJS.Timeout;
-import {minutesToReadable} from "../utils";
+import { minutesToReadable } from '../utils';
 
 type Message = DiscordMessage & {
     command?: never | null;
@@ -49,11 +49,11 @@ export class PingableUserController extends Controller {
         const punishmentController = this.bot.getPunishmentController();
         const author = message.guild?.members.resolve(message.author.id);
         if (
-            !punishmentController.isMonitoredMember(author)
-            || message.author.bot
-            || message.content.startsWith(CONFIG.bot.prefix)
-            || CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0
-            || CONFIG.bot.notifyChannels.indexOf(message.channel.id) >= 0
+            !punishmentController.isMonitoredMember(author) ||
+            message.author.bot ||
+            message.content.startsWith(CONFIG.bot.prefix) ||
+            CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0 ||
+            CONFIG.bot.notifyChannels.indexOf(message.channel.id) >= 0
         ) {
             return false;
         }
@@ -112,11 +112,11 @@ export class PingableUserController extends Controller {
                 const link = `https://discord.com/channels/${message.guild?.id}/${message.channel.id}/${message.id}`;
                 await channel
                     .send({
-                        content: `**Attention ${notifiedRoles.join(
-                            ', '
-                        )},** 
+                        content: `**Attention ${notifiedRoles.join(', ')},** 
 <@${authorId}> has made an appearance!
-I'll notify you again after \`${minutesToReadable(timeout)}\` have passed since the last message they send.`,
+I'll notify you again after \`${minutesToReadable(
+                            timeout
+                        )}\` have passed since the last message they send.`,
                         allowedMentions: { roles: CONFIG.bot.notifyRoles, users: [] },
                         components: [
                             {
@@ -126,11 +126,11 @@ I'll notify you again after \`${minutesToReadable(timeout)}\` have passed since 
                                         type: 'BUTTON',
                                         label: 'View Post',
                                         url: link,
-                                        style: 'LINK'
-                                    }
-                                ]
-                            }
-                        ]
+                                        style: 'LINK',
+                                    },
+                                ],
+                            },
+                        ],
                     })
                     .catch(this.handleError);
             }

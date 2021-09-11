@@ -1,8 +1,8 @@
-import {PoolClient, QueryResult} from 'pg';
+import { PoolClient, QueryResult } from 'pg';
 import DatabaseManager from '../database';
-import {DatabaseError} from '../errors';
-import {DBParsed, DBTable, ValidationState, ValueObject} from '../types';
-import {BotLogger} from '../../utils/logger';
+import { DatabaseError } from '../errors';
+import { DBParsed, DBTable, ValidationState, ValueObject } from '../types';
+import { BotLogger } from '../../utils/logger';
 
 export default class Table<Row = DBTable, Parsed = DBParsed> {
     protected readonly manager: DatabaseManager;

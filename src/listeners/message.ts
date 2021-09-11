@@ -1,6 +1,6 @@
-import {Listener} from "@sapphire/framework";
-import {Message} from "discord.js";
-import Bot from "../Bot";
+import { Listener } from '@sapphire/framework';
+import { Message } from 'discord.js';
+import Bot from '../Bot';
 
 class MessageEvent extends Listener<'message'> {
     public async run(message: Message): Promise<void> {

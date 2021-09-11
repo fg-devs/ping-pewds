@@ -17,7 +17,7 @@ class BotConfig extends Conf {
 
     public readonly notifyRoles: string[];
 
-    public readonly moderatorRoles: string[]
+    public readonly moderatorRoles: string[];
 
     public readonly notifyChannels: string[];
 

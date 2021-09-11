@@ -1,4 +1,4 @@
-import {Listener, ListenerErrorPayload} from "@sapphire/framework";
+import { Listener, ListenerErrorPayload } from '@sapphire/framework';
 
 class ListenerErrorEvent extends Listener<'listenerError'> {
     public async run(err: Error, payload: ListenerErrorPayload): Promise<void> {

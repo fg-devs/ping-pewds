@@ -26,8 +26,8 @@ describe('Start punishments tests', async function () {
             type: 'ban',
             target: 'user',
             targetKey: '1234',
-            lenient: false
-        })
+            lenient: false,
+        });
 
         assert.isTrue(created);
 
@@ -36,8 +36,8 @@ describe('Start punishments tests', async function () {
             type: 'ban',
             target: 'user',
             targetKey: '1234',
-            lenient: false
-        })
+            lenient: false,
+        });
 
         assert.isTrue(created);
     });
@@ -45,8 +45,8 @@ describe('Start punishments tests', async function () {
     it('should fetch all active punishments', async () => {
         const punishments = await db.punishments.getAllActive();
 
-        assert.isTrue(punishments.length > 0)
-    })
+        assert.isTrue(punishments.length > 0);
+    });
 
     it('should create and then delete a punishment', async () => {
         const created = await db.punishments.create({
@@ -54,8 +54,8 @@ describe('Start punishments tests', async function () {
             type: 'ban',
             target: 'user',
             targetKey: '123',
-            lenient: false
-        })
+            lenient: false,
+        });
 
         assert.isTrue(created);
 
@@ -63,9 +63,9 @@ describe('Start punishments tests', async function () {
             index: 999,
             target: 'user',
             targetKey: '123',
-            lenient: false
-        })
+            lenient: false,
+        });
 
         assert.isTrue(removed);
-    })
+    });
 });

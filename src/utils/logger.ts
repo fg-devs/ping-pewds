@@ -14,7 +14,7 @@ export class BotLogger extends Logger {
     private readonly title?: string;
 
     public constructor(level?: LogLevel, title?: string) {
-        super(level || LogLevel.Debug)
+        super(level || LogLevel.Debug);
         // super({
         //     level: level || LogLevel.Trace,
         // });

@@ -1,15 +1,15 @@
-import {GuildMember} from "discord.js";
-import {CONFIG} from "../globals";
-import {TargetType} from "../database/types";
+import { GuildMember } from 'discord.js';
+import { CONFIG } from '../globals';
+import { TargetType } from '../database/types';
 
 export function minutesToReadable(minutes?: number | null) {
     if (typeof minutes !== 'number') {
-        return '0 minutes'
+        return '0 minutes';
     }
     let hours = 0;
     let days = 0;
     if (minutes >= 60) {
-        hours = minutes / 60
+        hours = minutes / 60;
         minutes = minutes % 60;
     }
     if (hours >= 24) {
@@ -18,7 +18,7 @@ export function minutesToReadable(minutes?: number | null) {
     }
     let str = '';
     if (minutes > 0) {
-        str = `${Math.floor(minutes)} minutes`
+        str = `${Math.floor(minutes)} minutes`;
     }
     if (hours > 0) {
         str = `${Math.floor(hours)} hours, ` + str;
@@ -30,21 +30,20 @@ export function minutesToReadable(minutes?: number | null) {
 }
 
 export function parsedUserOrRole(target?: TargetType, key?: string) {
-    if (!(target && key))
-        return 'N/A'
-    return `<@${target === 'role' ? '&' : ''}${key}>`
+    if (!(target && key)) return 'N/A';
+    return `<@${target === 'role' ? '&' : ''}${key}>`;
 }
 
 export function sentByAuthorizedUser(author?: GuildMember | null) {
-    return CONFIG.bot.moderatorRoles.findIndex((role) => (
-        author?.roles.resolve(role) !== null
-    )) >= 0
+    return (
+        CONFIG.bot.moderatorRoles.findIndex(
+            (role) => author?.roles.resolve(role) !== null
+        ) >= 0
+    );
 }
 
-export function getRoleOrUser(args: { target?: string; targetKey?: string}) {
-    if (args.target === 'role')
-        return `<@&${args.targetKey}>`
-    if (args.target === 'user')
-        return `<@${args.targetKey}>`;
+export function getRoleOrUser(args: { target?: string; targetKey?: string }) {
+    if (args.target === 'role') return `<@&${args.targetKey}>`;
+    if (args.target === 'user') return `<@${args.targetKey}>`;
     return args.targetKey;
 }

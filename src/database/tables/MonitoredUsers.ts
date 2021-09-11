@@ -2,7 +2,7 @@ import { PoolClient } from 'pg';
 import Table from '../models/Table';
 import { Parsed, Results, ValidationState } from '../types';
 import DatabaseManager from '../database';
-import {DatabaseError, InsertError, SelectError, UpdateError} from '../errors';
+import { DatabaseError, InsertError, SelectError, UpdateError } from '../errors';
 
 export default class MonitoredUsersTable extends Table<
     Results.DBMonitoredUser,
@@ -134,11 +134,9 @@ export default class MonitoredUsersTable extends Table<
     }
 
     public async getAll(connection?: PoolClient): Promise<Array<Parsed.MonitoredUser>> {
-
-        const response = await this.query(
-            connection,
-            `SELECT * FROM ${this.full}`
-        ).catch((err) => new SelectError(err));
+        const response = await this.query(connection, `SELECT * FROM ${this.full}`).catch(
+            (err) => new SelectError(err)
+        );
 
         if (response instanceof DatabaseError) throw response;
 

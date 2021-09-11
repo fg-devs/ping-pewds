@@ -1,4 +1,4 @@
-import PunishmentHistory from "./tables/PunishmentHistory";
+import PunishmentHistory from './tables/PunishmentHistory';
 
 export enum ValidationState {
     NOT_PROCESSED,
@@ -15,14 +15,14 @@ export type PunishmentType = 'ban' | 'mute' | 'kick';
 export type TargetType = 'role' | 'user';
 
 type StandardPunishment = {
-    target: 'standard',
+    target: 'standard';
     targetKey: null;
-}
+};
 
 type TargetedPunishment = {
     target: 'role' | 'user';
     targetKey: string;
-}
+};
 
 type DefaultPunishmentProps = {
     id: number;
@@ -30,10 +30,10 @@ type DefaultPunishmentProps = {
     active: boolean;
     lenient: boolean;
     length: number | null;
-    type: PunishmentType
+    type: PunishmentType;
     target: TargetType;
     targetKey: Nullable<string>;
-}
+};
 
 export namespace Results {
     export type DBMonitoredUser = {
@@ -63,7 +63,7 @@ export namespace Results {
         punishment_target: TargetType;
         punishment_target_key: Nullable<string>;
         punishment_length: Nullable<number>;
-    }
+    };
 }
 
 export namespace Parsed {
@@ -85,23 +85,33 @@ export namespace Parsed {
         count: number;
     };
 
-    export type Punishment = DefaultPunishmentProps & (StandardPunishment | TargetedPunishment)
+    export type Punishment = DefaultPunishmentProps &
+        (StandardPunishment | TargetedPunishment);
 }
 
 export type ValueObject = Array<string | number | boolean>;
 
-export type DBTable = Results.DBMonitoredUser | Results.DBPunishmentHistory | Results.DBPunishment;
+export type DBTable =
+    | Results.DBMonitoredUser
+    | Results.DBPunishmentHistory
+    | Results.DBPunishment;
 // | Results.NextTable
 
-export type DBParsed = Parsed.MonitoredUser | Parsed.PunishmentHistory | Parsed.Punishment;
+export type DBParsed =
+    | Parsed.MonitoredUser
+    | Parsed.PunishmentHistory
+    | Parsed.Punishment;
 // | Parsed.NextTable
 
 export namespace Tables {
     export namespace Punishments {
-        export type CreateObject = Omit<Parsed.Punishment, 'id'|'active'|'length'> & {
+        export type CreateObject = Omit<Parsed.Punishment, 'id' | 'active' | 'length'> & {
             length?: number;
         };
 
-        export type RemoveObject = Omit<Parsed.Punishment, 'id'|'active'|'length'|'type'>
+        export type RemoveObject = Omit<
+            Parsed.Punishment,
+            'id' | 'active' | 'length' | 'type'
+        >;
     }
 }

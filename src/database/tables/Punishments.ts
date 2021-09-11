@@ -1,16 +1,13 @@
-import Table from "../models/Table";
-import {Parsed, Results, Tables, ValidationState} from "../types";
-import DatabaseManager from "../database";
-import {PoolClient} from "pg";
-import {DatabaseError, DeleteError, InsertError, SelectError} from "../errors";
+import Table from '../models/Table';
+import { Parsed, Results, Tables, ValidationState } from '../types';
+import DatabaseManager from '../database';
+import { PoolClient } from 'pg';
+import { DatabaseError, DeleteError, InsertError, SelectError } from '../errors';
 
 type CreateObject = Tables.Punishments.CreateObject;
 type RemoveObject = Tables.Punishments.RemoveObject;
 
-export default class Punishments extends Table<
-    Results.DBPunishment,
-    Parsed.Punishment
-    > {
+export default class Punishments extends Table<Results.DBPunishment, Parsed.Punishment> {
     protected readonly accepted: Array<keyof Parsed.Punishment>;
 
     protected readonly nullables: Array<keyof Parsed.Punishment>;
@@ -23,7 +20,15 @@ export default class Punishments extends Table<
         super(manager, 'punishments');
 
         this.nullables = ['targetKey', 'length'];
-        this.accepted = ['active', 'type', 'lenient', 'length', 'target', 'targetKey', 'index'];
+        this.accepted = [
+            'active',
+            'type',
+            'lenient',
+            'length',
+            'target',
+            'targetKey',
+            'index',
+        ];
 
         this.mappedKeys = {
             id: 'punishment_id',
@@ -33,13 +38,19 @@ export default class Punishments extends Table<
             lenient: 'punishment_lenient',
             length: 'punishment_length',
             target: 'punishment_target',
-            targetKey: 'punishment_target_key'
+            targetKey: 'punishment_target_key',
         };
     }
 
-    public async create(punishment: CreateObject): Promise<boolean>
-    public async create(connection: PoolClient | undefined, punishment: CreateObject): Promise<boolean>
-    public async create(connection: PoolClient | CreateObject | undefined, punishment?: CreateObject): Promise<boolean> {
+    public async create(punishment: CreateObject): Promise<boolean>;
+    public async create(
+        connection: PoolClient | undefined,
+        punishment: CreateObject
+    ): Promise<boolean>;
+    public async create(
+        connection: PoolClient | CreateObject | undefined,
+        punishment?: CreateObject
+    ): Promise<boolean> {
         if (typeof (connection as CreateObject)?.type === 'string') {
             punishment = connection as CreateObject;
             connection = undefined;
@@ -50,10 +61,15 @@ export default class Punishments extends Table<
         }
 
         if (['ban', 'kick', 'mute'].indexOf(punishment.type) === -1) {
-            throw new InsertError(`An invalid punishment type was provided: ${punishment.type}`);
+            throw new InsertError(
+                `An invalid punishment type was provided: ${punishment.type}`
+            );
         }
 
-        if (['user', 'role'].indexOf(punishment.target) === -1 && typeof punishment.targetKey !== 'string') {
+        if (
+            ['user', 'role'].indexOf(punishment.target) === -1 &&
+            typeof punishment.targetKey !== 'string'
+        ) {
             throw new InsertError(`${punishment.target} requires a targetKey`);
         }
 
@@ -65,7 +81,7 @@ export default class Punishments extends Table<
             punishment.targetKey,
             punishment.lenient ? 1 : 0,
             typeof punishment.length === 'number' ? punishment.length : null,
-        ] as never[]
+        ] as never[];
 
         const fields = [
             this.mappedKeys.active,
@@ -74,8 +90,8 @@ export default class Punishments extends Table<
             this.mappedKeys.target,
             this.mappedKeys.targetKey,
             this.mappedKeys.lenient,
-            this.mappedKeys.length
-        ]
+            this.mappedKeys.length,
+        ];
 
         const response = await this.query(
             connection as PoolClient | undefined,
@@ -90,8 +106,9 @@ export default class Punishments extends Table<
         return response.rowCount > 0;
     }
 
-    public async getAllActive(connection?: PoolClient): Promise<Array<Parsed.Punishment>> {
-
+    public async getAllActive(
+        connection?: PoolClient
+    ): Promise<Array<Parsed.Punishment>> {
         const response = await this.query<Results.DBPunishment>(
             connection,
             `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.active} = 1
@@ -100,12 +117,18 @@ export default class Punishments extends Table<
 
         if (response instanceof DatabaseError) throw response;
 
-        return response.rows.map(this.parse)
+        return response.rows.map(this.parse);
     }
 
-    public async remove(punishmment: RemoveObject): Promise<boolean>
-    public async remove(connection: PoolClient | undefined, punishment: RemoveObject): Promise<boolean>
-    public async remove(connection: PoolClient | RemoveObject | undefined, punishment?: RemoveObject): Promise<boolean> {
+    public async remove(punishmment: RemoveObject): Promise<boolean>;
+    public async remove(
+        connection: PoolClient | undefined,
+        punishment: RemoveObject
+    ): Promise<boolean>;
+    public async remove(
+        connection: PoolClient | RemoveObject | undefined,
+        punishment?: RemoveObject
+    ): Promise<boolean> {
         if (typeof (connection as RemoveObject)?.target === 'string') {
             punishment = connection as RemoveObject;
             connection = undefined;
@@ -115,7 +138,10 @@ export default class Punishments extends Table<
             throw new InsertError('No punishment object provided');
         }
 
-        if (['user', 'role'].indexOf(punishment.target) === -1 && typeof punishment.targetKey !== 'string') {
+        if (
+            ['user', 'role'].indexOf(punishment.target) === -1 &&
+            typeof punishment.targetKey !== 'string'
+        ) {
             throw new InsertError(`${punishment.target} requires a targetKey`);
         }
 
@@ -123,8 +149,8 @@ export default class Punishments extends Table<
             punishment.index,
             punishment.target,
             punishment.targetKey,
-            punishment.lenient ? 1 : 0
-        ]
+            punishment.lenient ? 1 : 0,
+        ];
 
         const response = await this.query(
             connection as PoolClient | undefined,
@@ -169,7 +195,7 @@ export default class Punishments extends Table<
                 connection,
                 `CREATE UNIQUE INDEX ${this.name}_unique_idx ON ${this.full}
                     (${this.mappedKeys.index}, ${this.mappedKeys.target}, ${this.mappedKeys.targetKey}, ${this.mappedKeys.lenient})`
-            )
+            );
 
             return ValidationState.VALIDATED;
         } catch (e) {
@@ -188,6 +214,6 @@ export default class Punishments extends Table<
             length: data.punishment_length,
             target: data.punishment_target,
             targetKey: data.punishment_target_key as never,
-        }
+        };
     }
 }

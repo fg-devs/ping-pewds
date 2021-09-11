@@ -1,8 +1,8 @@
-import {Command, CommandOptions, PieceContext} from '@sapphire/framework';
+import { Command, CommandOptions, PieceContext } from '@sapphire/framework';
 import { Message } from 'discord.js';
 import Bot from '../../Bot';
 import { CONFIG } from '../../globals';
-import {ApplyOptions} from "@sapphire/decorators";
+import { ApplyOptions } from '@sapphire/decorators';
 
 @ApplyOptions<CommandOptions>({
     name: 'clear',
@@ -19,7 +19,10 @@ export default class ClearTimeout extends Command {
     public hasPermission(message: Message, ownerOverride?: boolean): boolean {
         const bot = this.container.client as Bot;
         const author = message.guild?.members.resolve(message.author.id);
-        return bot.getPunishmentController().isMonitoredMember(author) || ownerOverride === true;
+        return (
+            bot.getPunishmentController().isMonitoredMember(author) ||
+            ownerOverride === true
+        );
     }
 
     /**

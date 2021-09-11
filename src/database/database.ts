@@ -4,7 +4,7 @@ import Bot from '../Bot';
 import { BotLogger } from '../utils/logger';
 import MonitoredUsersTable from './tables/MonitoredUsers';
 import PunishmentHistory from './tables/PunishmentHistory';
-import Punishments from "./tables/Punishments";
+import Punishments from './tables/Punishments';
 
 type CustomizedConfig = PoolConfig & {
     schema: string;

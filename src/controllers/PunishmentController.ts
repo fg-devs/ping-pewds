@@ -1,13 +1,13 @@
-import {Guild, GuildMember, Message, MessageEmbedOptions} from 'discord.js';
+import { Guild, GuildMember, Message, MessageEmbedOptions } from 'discord.js';
 import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
-import {Parsed, TargetType} from '../database/types';
+import { Parsed, TargetType } from '../database/types';
 
 export type FlaggedMention = {
     user: string;
     role?: string;
-    type: TargetType
+    type: TargetType;
 };
 
 type Punishment = Parsed.Punishment;
@@ -18,11 +18,10 @@ type PunishmentCache = {
     };
     user: {
         [s: string]: Punishment[];
-    }
-}
+    };
+};
 
 export default class PunishmentController extends Controller {
-
     private punishments: PunishmentCache;
 
     public constructor(bot: Bot) {
@@ -36,10 +35,8 @@ export default class PunishmentController extends Controller {
         const activePunishments = await db.punishmentHistory.getAllLatest();
 
         if (syncPunishments) {
-            const punishments = await db.punishments.getAllActive()
-            this.punishments = this.organizePunishments(
-                punishments
-            );
+            const punishments = await db.punishments.getAllActive();
+            this.punishments = this.organizePunishments(punishments);
         }
 
         const guild = this.bot.guilds.resolve(CONFIG.bot.guild);
@@ -62,11 +59,10 @@ export default class PunishmentController extends Controller {
                 punishment.endsAt.getTime() < Date.now() &&
                 punishment.active;
 
-            if (!shouldRemovePunishment)
-                return;
+            if (!shouldRemovePunishment) return;
 
             try {
-                const member = await guild.members.fetch(punishment.userId)
+                const member = await guild.members.fetch(punishment.userId);
                 if (member) {
                     await member.roles.remove(CONFIG.bot.muteRole);
                     await db.punishmentHistory.setActive(punishment.id, false);
@@ -81,14 +77,11 @@ export default class PunishmentController extends Controller {
                     'They have served their sentence.'
                 );
                 await db.punishmentHistory.setActive(punishment.id, false);
-                this.getLogger().info(
-                    `${punishment.userId} has served their sentence.`
-                );
+                this.getLogger().info(`${punishment.userId} has served their sentence.`);
             } catch (noop) {
                 // should only catch if the user was unbanned manually
                 // and we shouldn't care about them.
             }
-
         };
     }
 
@@ -113,16 +106,15 @@ export default class PunishmentController extends Controller {
         // TODO create a lenient role that has lighter punishments
         //      necessary for the tiered roles to have lighter punishments since they are patrons
 
-
-        const hasLenientRole = CONFIG.bot.lenientRoles.findIndex((role) => {
-            return guildMember.roles.resolve(role) !== null;
-        }) >= 0;
+        const hasLenientRole =
+            CONFIG.bot.lenientRoles.findIndex((role) => {
+                return guildMember.roles.resolve(role) !== null;
+            }) >= 0;
 
         let punishments: Punishment[] = [];
 
         for (const mention of mentions) {
-            if (punishments.length > 0)
-                break;
+            if (punishments.length > 0) break;
             punishments.push(
                 ...this.getPunishments(
                     mention.type,
@@ -130,8 +122,8 @@ export default class PunishmentController extends Controller {
                     mention.type === 'user'
                         ? mention.user
                         : mention.type === 'role' && mention.role
-                            ? mention.role
-                            : undefined
+                        ? mention.role
+                        : undefined
                 )
             );
         }
@@ -140,18 +132,22 @@ export default class PunishmentController extends Controller {
             this.getLogger().warn({
                 error: 'No lenient punishments found.',
                 mentions,
-            })
+            });
             return;
         }
 
-        const nextPunishment = punishments[Math.min(currentPunishments.length, punishments.length - 1)];
+        const nextPunishment =
+            punishments[Math.min(currentPunishments.length, punishments.length - 1)];
 
-        const endsAt = typeof nextPunishment.length === 'number' ? Date.now() + nextPunishment.length : true;
+        const endsAt =
+            typeof nextPunishment.length === 'number'
+                ? Date.now() + nextPunishment.length
+                : true;
 
         await db.punishmentHistory.create({
             userId: author,
             endsAt,
-        })
+        });
 
         await this.handleDiscordPunishment(
             message,
@@ -163,10 +159,10 @@ export default class PunishmentController extends Controller {
     }
 
     public isMonitoredMember(author?: GuildMember | null): boolean {
-        const hasMonitoredRole = Object.keys(this.punishments.role)
-            .findIndex((role) => (
-                author?.roles.resolve(role) !== null
-            )) >= 0
+        const hasMonitoredRole =
+            Object.keys(this.punishments.role).findIndex(
+                (role) => author?.roles.resolve(role) !== null
+            ) >= 0;
         const isMonitoredUser = this.punishments.user[author?.id || 0] instanceof Array;
 
         return isMonitoredUser || hasMonitoredRole;
@@ -179,18 +175,19 @@ export default class PunishmentController extends Controller {
         punishmentHistory: Array<Parsed.PunishmentHistory | null>,
         endsAt: number | true
     ) {
-        const duration = endsAt === true ? 'the end of time' : `<t:${Math.round(endsAt / 1000)}>`
+        const duration =
+            endsAt === true ? 'the end of time' : `<t:${Math.round(endsAt / 1000)}>`;
         let description: string | undefined;
 
         switch (punishment.type) {
             case 'ban':
-                description = `You've been banned until ${duration} for pinging the following people.`
+                description = `You've been banned until ${duration} for pinging the following people.`;
                 break;
             case 'mute':
-                description = `You've been muted until ${duration} for pinging the following people.`
+                description = `You've been muted until ${duration} for pinging the following people.`;
                 break;
             case 'kick':
-                description = `You've been kicked for pinging the following people.`
+                description = `You've been kicked for pinging the following people.`;
                 break;
         }
 
@@ -204,31 +201,37 @@ export default class PunishmentController extends Controller {
             fields: [
                 {
                     name: 'Mentioned Users',
-                    value: mentions.map((mention) => `<@${mention.user}>`).join(', ')
+                    value: mentions.map((mention) => `<@${mention.user}>`).join(', '),
                 },
                 {
                     name: 'Punishment History',
-                    value: punishmentHistory.length > 0 ? punishmentHistory.map((pun) => {
-                        return `Punished at <t:${Math.round((pun?.createdAt.getTime() || 0) / 1000)}>`
-                    }).join('\n') : 'No previous punishments'
-                }
+                    value:
+                        punishmentHistory.length > 0
+                            ? punishmentHistory
+                                  .map((pun) => {
+                                      return `Punished at <t:${Math.round(
+                                          (pun?.createdAt.getTime() || 0) / 1000
+                                      )}>`;
+                                  })
+                                  .join('\n')
+                            : 'No previous punishments',
+                },
             ],
             color: 'RED',
         };
 
         const channel = await message.author.createDM();
         await channel.send({
-            embeds: [embed]
+            embeds: [embed],
         });
 
         // skip the actual punishment for testing
-        if (CONFIG.bot.dryrun)
-            return true;
+        if (CONFIG.bot.dryrun) return true;
 
         switch (punishment.type) {
             case 'ban':
                 await message.guild?.members.ban(message.author, {
-                    reason: `Pinging people they shouldn't ping.`
+                    reason: `Pinging people they shouldn't ping.`,
                 });
                 break;
             case 'mute':
@@ -247,7 +250,7 @@ export default class PunishmentController extends Controller {
     }
 
     public getBlockedUsers() {
-        return Object.keys(this.punishments.user)
+        return Object.keys(this.punishments.user);
     }
 
     public getBlockedRoles() {
@@ -255,20 +258,27 @@ export default class PunishmentController extends Controller {
     }
 
     public getPunishment(target: TargetType, key: string) {
-        if (typeof this.punishments[target][key] === 'undefined' || this.punishments[target][key].length === 0) {
+        if (
+            typeof this.punishments[target][key] === 'undefined' ||
+            this.punishments[target][key].length === 0
+        ) {
             return null;
         }
-        return [
-            ...this.punishments[target][key]
-        ]
+        return [...this.punishments[target][key]];
     }
 
-    private getPunishments(target: TargetType, lenient: boolean, targetKey?: string): Punishment[] {
+    private getPunishments(
+        target: TargetType,
+        lenient: boolean,
+        targetKey?: string
+    ): Punishment[] {
         if (!(typeof targetKey === 'string' && this.punishments[target][targetKey]))
             return [];
-        const filtered = this.punishments[target][targetKey].filter((k) => k.lenient === lenient);
+        const filtered = this.punishments[target][targetKey].filter(
+            (k) => k.lenient === lenient
+        );
         if (filtered.length === 0 && lenient) {
-            return this.punishments[target][targetKey].filter((k) => !k.lenient)
+            return this.punishments[target][targetKey].filter((k) => !k.lenient);
         }
         return filtered;
     }
@@ -276,10 +286,9 @@ export default class PunishmentController extends Controller {
     private organizePunishments(punishments?: Punishment[]) {
         const nextCache: PunishmentCache = {
             role: {},
-            user: {}
-        }
-        if (typeof punishments === 'undefined')
-            return nextCache;
+            user: {},
+        };
+        if (typeof punishments === 'undefined') return nextCache;
 
         punishments.forEach((punishment) => {
             switch (punishment.target) {
@@ -294,7 +303,7 @@ export default class PunishmentController extends Controller {
                     nextCache.role[punishment.targetKey].push(punishment);
                     break;
             }
-        })
+        });
         return nextCache;
     }
 }

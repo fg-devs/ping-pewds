@@ -1,5 +1,5 @@
-import {CommandRunPayload, Listener} from "@sapphire/framework";
-import LogUtil from "../utils/LogUtil";
+import { CommandRunPayload, Listener } from '@sapphire/framework';
+import LogUtil from '../utils/LogUtil';
 
 class CommandErrorEvent extends Listener<'commandError'> {
     public async run(err: Error, payload: CommandRunPayload): Promise<void> {

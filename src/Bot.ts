@@ -7,7 +7,6 @@ import { PingController } from './controllers/PingController';
 import PunishmentController from './controllers/PunishmentController';
 
 class Bot extends SapphireClient {
-
     private readonly pingableUserController: PingableUserController;
 
     private readonly pingController: PingController;
@@ -46,7 +45,6 @@ class Bot extends SapphireClient {
         this.pingableUserController = new PingableUserController(this);
         this.pingController = new PingController(this);
         this.punishmentController = new PunishmentController(this);
-
     }
 
     /**

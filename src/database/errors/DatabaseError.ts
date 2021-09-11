@@ -1,6 +1,6 @@
-import {DatabaseError as DBError} from "pg-protocol/dist/messages";
+import { DatabaseError as DBError } from 'pg-protocol/dist/messages';
 
-type RippedDBError = Omit<DBError, 'message'|'length'|'name'>;
+type RippedDBError = Omit<DBError, 'message' | 'length' | 'name'>;
 
 export default class DatabaseError implements RippedDBError {
     public static DELETE_ERROR = 'Delete Error';

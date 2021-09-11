@@ -2,8 +2,8 @@ import { Message } from 'discord.js';
 import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
-import {FlaggedMention} from "./PunishmentController";
-import {sentByAuthorizedUser} from "../utils";
+import { FlaggedMention } from './PunishmentController';
+import { sentByAuthorizedUser } from '../utils';
 
 export class PingController extends Controller {
     constructor(bot: Bot) {
@@ -20,9 +20,9 @@ export class PingController extends Controller {
         const author = message.guild?.members.resolve(message.author.id);
 
         if (
-            message.author.bot
-            || CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0
-            || sentByAuthorizedUser(author)
+            message.author.bot ||
+            CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0 ||
+            sentByAuthorizedUser(author)
         )
             return false;
 
@@ -37,11 +37,11 @@ export class PingController extends Controller {
             const flaggedUser = message.mentions.users.get(mention.user);
             if (typeof flaggedUser === 'undefined') return;
             canPing = false;
-            pingedUsers.push(`<@${flaggedUser.id}>`)
+            pingedUsers.push(`<@${flaggedUser.id}>`);
             this.getLogger().info(
                 `A mention of '${flaggedUser.username}' was caught and  is pending deletion.`
             );
-        })
+        });
 
         if (canPing) return false;
 
@@ -69,7 +69,7 @@ export class PingController extends Controller {
      * and returns all the user id that are mentioned that should not be.
      */
     private getFlaggedMentions(message: Message): FlaggedMention[] {
-        const punishmentController = this.bot.getPunishmentController()
+        const punishmentController = this.bot.getPunishmentController();
         const mentions: FlaggedMention[] = [];
 
         const blockedUsers = punishmentController.getBlockedUsers();
@@ -77,24 +77,24 @@ export class PingController extends Controller {
             if (message.mentions.has(blocked)) {
                 mentions.push({
                     user: blocked,
-                    type: 'user'
+                    type: 'user',
                 });
             }
-        })
+        });
 
         const blockedRoles = punishmentController.getBlockedRoles();
         blockedRoles.forEach((role) => {
             const exists = message.mentions.members?.find((user) => {
-                return user.roles.resolve(role) !== null
-            })
+                return user.roles.resolve(role) !== null;
+            });
             if (exists) {
                 mentions.push({
                     user: exists.id,
                     role,
-                    type: 'role'
-                })
+                    type: 'role',
+                });
             }
-        })
+        });
 
         return mentions;
     }

@@ -2,7 +2,7 @@ import { PoolClient } from 'pg';
 import Table from '../models/Table';
 import { Parsed, Results, ValidationState } from '../types';
 import DatabaseManager from '../database';
-import {DatabaseError, InsertError, SelectError, UpdateError} from '../errors';
+import { DatabaseError, InsertError, SelectError, UpdateError } from '../errors';
 
 type HistoryObject = {
     userId: number | string;
@@ -41,10 +41,7 @@ export default class PunishmentHistory extends Table<
 
     public async create(history: HistoryObject): Promise<boolean>;
 
-    public async create(
-        connection: PoolClient,
-        history: HistoryObject
-    ): Promise<boolean>;
+    public async create(connection: PoolClient, history: HistoryObject): Promise<boolean>;
 
     public async create(
         connection: PoolClient | HistoryObject | undefined,
@@ -58,10 +55,7 @@ export default class PunishmentHistory extends Table<
             connection = undefined;
         }
 
-        if (
-            typeof history?.userId !== 'number' &&
-            typeof history?.userId !== 'string'
-        ) {
+        if (typeof history?.userId !== 'number' && typeof history?.userId !== 'string') {
             throw new InsertError('history object is not valid');
         }
 
@@ -325,9 +319,7 @@ export default class PunishmentHistory extends Table<
             id: data.history_id,
             active: data.history_active === 1,
             userId: data.history_user_id,
-            endsAt: data.history_ends_at
-                ? new Date(data.history_ends_at * 1000)
-                : null,
+            endsAt: data.history_ends_at ? new Date(data.history_ends_at * 1000) : null,
             expiresAt: data.history_expires_at
                 ? new Date(data.history_expires_at * 1000)
                 : null,
