@@ -9,6 +9,7 @@ bot:
   notifyRoles: []       # Role IDs that will get notified when a blocked user is active
   notifyChannels: []    # Channel IDs that will get notified when a blocked user is active
   excludedChannels: []  # Channel IDs that should be ignored by the bot
+  moderatorRoles: []     # Role IDs that are considered moderators or administrators
   lenientRoles: []      # Role IDs that when punished, will have lighter punishments
   muteRole: ''          # the Role ID that will be assigned to muted users
 database:

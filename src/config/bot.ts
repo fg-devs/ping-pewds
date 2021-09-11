@@ -17,6 +17,8 @@ class BotConfig extends Conf {
 
     public readonly notifyRoles: string[];
 
+    public readonly moderatorRoles: string[]
+
     public readonly notifyChannels: string[];
 
     public readonly lenientRoles: string[];
@@ -37,6 +39,7 @@ class BotConfig extends Conf {
         this.notifyRoles = [];
         this.notifyChannels = [];
         this.lenientRoles = [];
+        this.moderatorRoles = [];
         this.muteRole = '';
         this.dryrun = false;
     }
