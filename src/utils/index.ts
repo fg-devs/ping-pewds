@@ -1,3 +1,5 @@
+import {GuildMember, Message} from "discord.js";
+import {CONFIG} from "../globals";
 
 export function minutesToReadable(minutes?: number) {
     if (typeof minutes !== 'number') {
@@ -24,4 +26,10 @@ export function minutesToReadable(minutes?: number) {
         str = `${Math.floor(days)} days, ` + str;
     }
     return str;
+}
+
+export function sentByAuthorizedUser(author?: GuildMember | null) {
+    return CONFIG.bot.moderatorRoles.findIndex((role) => (
+        author?.roles.resolve(role) !== null
+    )) >= 0
 }
