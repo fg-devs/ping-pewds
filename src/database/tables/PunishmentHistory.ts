@@ -104,43 +104,43 @@ export default class PunishmentHistory extends Table<
 
     public async getByUserId(
         userId: string | number
-    ): Promise<Array<Parsed.PunishmentHistory | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory>>;
 
     public async getByUserId(
         userId: string | number,
         includeEnded: boolean
-    ): Promise<Array<Parsed.PunishmentHistory | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory>>;
 
     public async getByUserId(
         userId: string | number,
         includeEnded: boolean,
         includeExpired: boolean
-    ): Promise<Array<Parsed.PunishmentHistory | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory>>;
 
     public async getByUserId(
         connection: PoolClient,
         userId: string | number
-    ): Promise<Array<Parsed.PunishmentHistory | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory>>;
 
     public async getByUserId(
         connection: PoolClient,
         userId: string | number,
         includeEnded: boolean
-    ): Promise<Array<Parsed.PunishmentHistory | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory>>;
 
     public async getByUserId(
         connection: PoolClient,
         userId: string | number,
         includeEnded: boolean,
         includeExpired: boolean
-    ): Promise<Array<Parsed.PunishmentHistory | null>>;
+    ): Promise<Array<Parsed.PunishmentHistory>>;
 
     public async getByUserId(
         connection: PoolClient | string | number | undefined,
         userId?: string | number | boolean,
         includeEnded = false,
         includeExpired = false
-    ): Promise<Array<Parsed.PunishmentHistory | null>> {
+    ): Promise<Array<Parsed.PunishmentHistory>> {
         if (typeof connection === 'string' || typeof connection === 'number') {
             includeExpired = includeEnded || false;
             includeEnded = (userId as boolean) || false;
@@ -320,21 +320,18 @@ export default class PunishmentHistory extends Table<
         }
     }
 
-    protected parse(data?: Results.DBPunishmentHistory): Parsed.PunishmentHistory | null {
-        if (data) {
-            return {
-                id: data.history_id,
-                active: data.history_active === 1,
-                userId: data.history_user_id,
-                endsAt: data.history_ends_at
-                    ? new Date(data.history_ends_at * 1000)
-                    : null,
-                expiresAt: data.history_expires_at
-                    ? new Date(data.history_expires_at * 1000)
-                    : null,
-                createdAt: new Date(data.history_created_at * 1000),
-            };
-        }
-        return null;
+    protected parse(data: Results.DBPunishmentHistory): Parsed.PunishmentHistory {
+        return {
+            id: data.history_id,
+            active: data.history_active === 1,
+            userId: data.history_user_id,
+            endsAt: data.history_ends_at
+                ? new Date(data.history_ends_at * 1000)
+                : null,
+            expiresAt: data.history_expires_at
+                ? new Date(data.history_expires_at * 1000)
+                : null,
+            createdAt: new Date(data.history_created_at * 1000),
+        };
     }
 }
