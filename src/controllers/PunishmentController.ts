@@ -233,6 +233,14 @@ export default class PunishmentController extends Controller {
                     .resolve(message.author)
                     ?.roles.add(CONFIG.bot.muteRole);
                 break;
+            case 'kick':
+                if (message.member?.kickable)
+                    await message.member.kick("Pinging someone he shouldn't.");
+                else
+                    this.getLogger().warn(
+                        `${message.author.username} was not able to be kicked.`
+                    );
+                break;
             default:
                 this.getLogger().error(`Unhandled punishment type ${punishment.type}`);
         }
