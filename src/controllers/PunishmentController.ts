@@ -44,11 +44,11 @@ export default class PunishmentController extends Controller {
 
         const guild = this.bot.guilds.resolve(CONFIG.bot.guild);
         if (guild === null) throw new Error('Guild not found.');
-        const sync = this.syncPunishment(guild);
+        const sync = this.syncHistory(guild);
         await Promise.all(activePunishments.map(sync));
     }
 
-    public syncPunishment(
+    public syncHistory(
         guild: Guild
     ): (punishment: Parsed.PunishmentHistoryWithCount | null) => Promise<void> {
         const db = this.bot.getDatabase();
@@ -65,9 +65,14 @@ export default class PunishmentController extends Controller {
             if (!shouldRemovePunishment)
                 return;
 
-            const member = await guild.members.fetch(punishment.userId)
-            if (member) {
-                await member.roles.remove(CONFIG.bot.muteRole);
+            try {
+                const member = await guild.members.fetch(punishment.userId)
+                if (member) {
+                    await member.roles.remove(CONFIG.bot.muteRole);
+                    await db.punishmentHistory.setActive(punishment.id, false);
+                }
+            } catch (noop) {
+                // should only fire if the user is not in the guild
             }
 
             try {
@@ -259,9 +264,13 @@ export default class PunishmentController extends Controller {
     }
 
     private getPunishments(target: TargetType, lenient: boolean, targetKey?: string): Punishment[] {
-        if (typeof targetKey === 'string' && this.punishments[target][targetKey])
-            return this.punishments[target][targetKey].filter((k) => k.lenient === lenient);
-        return [];
+        if (!(typeof targetKey === 'string' && this.punishments[target][targetKey]))
+            return [];
+        const filtered = this.punishments[target][targetKey].filter((k) => k.lenient === lenient);
+        if (filtered.length === 0 && lenient) {
+            return this.punishments[target][targetKey].filter((k) => !k.lenient)
+        }
+        return filtered;
     }
 
     private organizePunishments(punishments?: Punishment[]) {

@@ -72,6 +72,7 @@ export default class Punishments extends SubCommandPluginCommand {
     public async list(message: Message): Promise<void> {
         const bot = this.container.client as Bot;
         const punishmentController = bot.getPunishmentController();
+        await punishmentController.synchronize(true);
         const rolePunishments = punishmentController.getBlockedRoles();
         const userPunishments = punishmentController.getBlockedUsers();
 
@@ -348,8 +349,8 @@ Please notify a developer so that we can check the internal logs`
         return punishments
             .filter(({lenient}) => isLenient === lenient)
             .map(({ length, type, index}) => (
-                `*#${index}*, **${type}** for ___${minutesToReadable((length || 0) / 1000) || 'eternity'}___`
-            )).join('\n');
+                `*#${index}*, **${type}** for ___${minutesToReadable((length || 0) / 1000 / 60) || 'eternity'}___`
+            )).join('\n') || 'No punishments found.';
     }
 
     private static LIST_PUNISHMENT_HISTORY(user: User, history: Parsed.PunishmentHistory[]): MessageEmbedOptions {
