@@ -47,4 +47,25 @@ describe('Start punishments tests', async function () {
 
         assert.isTrue(punishments.length > 0)
     })
+
+    it('should create and then delete a punishment', async () => {
+        const created = await db.punishments.create({
+            index: 999,
+            type: 'ban',
+            target: 'user',
+            targetKey: '123',
+            lenient: false
+        })
+
+        assert.isTrue(created);
+
+        const removed = await db.punishments.remove({
+            index: 999,
+            target: 'user',
+            targetKey: '123',
+            lenient: false
+        })
+
+        assert.isTrue(removed);
+    })
 });

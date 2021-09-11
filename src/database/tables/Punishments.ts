@@ -1,10 +1,11 @@
 import Table from "../models/Table";
-import {Nullable, Parsed, Results, Tables, ValidationState} from "../types";
+import {Parsed, Results, Tables, ValidationState} from "../types";
 import DatabaseManager from "../database";
 import {PoolClient} from "pg";
-import {DatabaseError, InsertError, SelectError} from "../errors";
+import {DatabaseError, DeleteError, InsertError, SelectError} from "../errors";
 
 type CreateObject = Tables.Punishments.CreateObject;
+type RemoveObject = Tables.Punishments.RemoveObject;
 
 export default class Punishments extends Table<
     Results.DBPunishment,
@@ -101,7 +102,43 @@ export default class Punishments extends Table<
         return response.rows.map(this.parse)
     }
 
+    public async remove(punishmment: RemoveObject): Promise<boolean>
+    public async remove(connection: PoolClient | undefined, punishment: RemoveObject): Promise<boolean>
+    public async remove(connection: PoolClient | RemoveObject | undefined, punishment?: RemoveObject): Promise<boolean> {
+        if (typeof (connection as RemoveObject)?.target === 'string') {
+            punishment = connection as RemoveObject;
+            connection = undefined;
+        }
 
+        if (typeof punishment === 'undefined') {
+            throw new InsertError('No punishment object provided');
+        }
+
+        if (['user', 'role'].indexOf(punishment.target) === -1 && typeof punishment.targetKey !== 'string') {
+            throw new InsertError(`${punishment.target} requires a targetKey`);
+        }
+
+        const fields = [
+            punishment.index,
+            punishment.target,
+            punishment.targetKey,
+            punishment.lenient ? 1 : 0
+        ]
+
+        const response = await this.query(
+            connection as PoolClient | undefined,
+            `DELETE FROM ${this.full} WHERE
+                ${this.mappedKeys.index} = $1
+                AND ${this.mappedKeys.target} = $2
+                AND ${this.mappedKeys.targetKey} = $3
+                AND ${this.mappedKeys.lenient} = $4;`,
+            fields
+        ).catch((err) => new DeleteError(err));
+
+        if (response instanceof DatabaseError) throw response;
+
+        return response.rowCount > 0;
+    }
 
     protected async init(connection?: PoolClient): Promise<ValidationState> {
         try {

@@ -101,5 +101,7 @@ export namespace Tables {
         export type CreateObject = Omit<Parsed.Punishment, 'id'|'active'|'length'> & {
             length?: number;
         };
+
+        export type RemoveObject = Omit<Parsed.Punishment, 'id'|'active'|'length'|'type'>
     }
 }
