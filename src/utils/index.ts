@@ -1,4 +1,4 @@
-import {GuildMember, Message} from "discord.js";
+import {GuildMember} from "discord.js";
 import {CONFIG} from "../globals";
 import {TargetType} from "../database/types";
 
@@ -39,4 +39,12 @@ export function sentByAuthorizedUser(author?: GuildMember | null) {
     return CONFIG.bot.moderatorRoles.findIndex((role) => (
         author?.roles.resolve(role) !== null
     )) >= 0
+}
+
+export function getRoleOrUser(args: { target?: string; targetKey?: string}) {
+    if (args.target === 'role')
+        return `<@&${args.targetKey}>`
+    if (args.target === 'user')
+        return `<@${args.targetKey}>`;
+    return args.targetKey;
 }
