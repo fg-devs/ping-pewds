@@ -2,7 +2,7 @@ import {Guild, GuildMember, Message, MessageEmbedOptions} from 'discord.js';
 import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
-import { Parsed } from '../database/types';
+import {Parsed, TargetType} from '../database/types';
 
 export type FlaggedMention = {
     user: string;
@@ -10,27 +10,7 @@ export type FlaggedMention = {
     type: TargetType
 };
 
-export type PunishmentType = 'ban' | 'mute' | 'kick';
-
-export type TargetType = 'role' | 'user';
-
-type StandardPunishment = {
-    target: 'standard',
-}
-
-type TargetedPunishment = {
-    target: 'role' | 'user';
-    targetKey: string;
-}
-
-type DefaultPunishmentProps = {
-    lenient: boolean;
-    length: number | null;
-    type: PunishmentType
-    target: TargetType;
-}
-
-type Punishment = DefaultPunishmentProps & (StandardPunishment | TargetedPunishment)
+type Punishment = Parsed.Punishment;
 
 type PunishmentCache = {
     role: {
@@ -265,6 +245,15 @@ export default class PunishmentController extends Controller {
 
     public getBlockedRoles() {
         return Object.keys(this.punishments.role);
+    }
+
+    public getPunishment(target: TargetType, key: string) {
+        if (typeof this.punishments[target][key] === 'undefined' || this.punishments[target][key].length === 0) {
+            return null;
+        }
+        return [
+            ...this.punishments[target][key]
+        ]
     }
 
     private getPunishments(target: TargetType, lenient: boolean, targetKey?: string): Punishment[] {
