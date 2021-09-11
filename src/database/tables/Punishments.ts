@@ -94,7 +94,8 @@ export default class Punishments extends Table<
 
         const response = await this.query<Results.DBPunishment>(
             connection,
-            `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.active} = 1;`
+            `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.active} = 1
+                ORDER BY ${this.mappedKeys.index}, ${this.mappedKeys.target}, ${this.mappedKeys.targetKey}, ${this.mappedKeys.lenient};`
         ).catch((err) => new SelectError(err));
 
         if (response instanceof DatabaseError) throw response;
