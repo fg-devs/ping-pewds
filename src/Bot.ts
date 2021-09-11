@@ -55,7 +55,7 @@ class Bot extends SapphireClient {
     public async start(): Promise<void> {
         await this.database.init();
         await this.login(CONFIG.bot.token);
-        await this.punishmentController.synchronize();
+        await this.punishmentController.synchronize(true);
         await this.pingableUserController.init();
         this.synchronizeLoop = setInterval(
             () =>

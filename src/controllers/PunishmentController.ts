@@ -31,14 +31,16 @@ export default class PunishmentController extends Controller {
         this.punishments = this.organizePunishments();
     }
 
-    public async synchronize(): Promise<void> {
+    public async synchronize(syncPunishments = false): Promise<void> {
         const db = this.bot.getDatabase();
         const activePunishments = await db.punishmentHistory.getAllLatest();
 
-        const punishments = await db.punishments.getAllActive()
-        this.punishments = this.organizePunishments(
-            punishments
-        );
+        if (syncPunishments) {
+            const punishments = await db.punishments.getAllActive()
+            this.punishments = this.organizePunishments(
+                punishments
+            );
+        }
 
         const guild = this.bot.guilds.resolve(CONFIG.bot.guild);
         if (guild === null) throw new Error('Guild not found.');

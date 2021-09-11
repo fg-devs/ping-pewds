@@ -158,7 +158,7 @@ Punishment length ${minutesToReadable(parsedArgs.length)}
 \`\`\``
         })
 
-        await bot.getPunishmentController().synchronize();
+        await bot.getPunishmentController().synchronize(true);
     }
 
     public async for(message: Message, args: Args): Promise<void> {
@@ -233,7 +233,7 @@ Please notify a developer so that we can check the internal logs`
             content: `Successfully removed punishment for ${parsedArgs.target} ${getRoleOrUser(parsedArgs)}.`
         })
 
-        await bot.getPunishmentController().synchronize();
+        await bot.getPunishmentController().synchronize(true);
     }
 
     private static async parseCreateArgs(argsObj: Args): Promise<Tables.Punishments.CreateObject> {
