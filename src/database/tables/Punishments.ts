@@ -49,6 +49,17 @@ export default class Punishments extends Table<Results.DBPunishment, Parsed.Puni
         punishment: CreateObject
     ): Promise<boolean>;
 
+    /**
+     * Used to create a punishment record in the database. This record contains...
+     * > the priority index
+     * > type of punishment
+     * > target ID (role or user ID)
+     * > target key (role or user)
+     * > is punishment lenient
+     * > length in seconds to punish
+     * @param connection [PoolClient | CreateObject | undefined]
+     * @param punishment [CreateObject]
+     */
     public async create(
         connection: PoolClient | CreateObject | undefined,
         punishment?: CreateObject
@@ -108,9 +119,14 @@ export default class Punishments extends Table<Results.DBPunishment, Parsed.Puni
         return response.rowCount > 0;
     }
 
+    /**
+     * Returns all active punishments
+     * @param connection [PoolClient | undefined]
+     * @returns Promise<Parsed.Punishment[]>
+     */
     public async getAllActive(
         connection?: PoolClient
-    ): Promise<Array<Parsed.Punishment>> {
+    ): Promise<Parsed.Punishment[]> {
         const response = await this.query<Results.DBPunishment>(
             connection,
             `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.active} = 1
@@ -129,6 +145,13 @@ export default class Punishments extends Table<Results.DBPunishment, Parsed.Puni
         punishment: RemoveObject
     ): Promise<boolean>;
 
+    /**
+     * Used to remove a punishment record from the database.
+     * Requires the following properties...
+     * [index, target, targetKey, lenient]
+     * @param connection [PoolClient | RemoveObject | undefined]
+     * @param punishment [RemoveObject]
+     */
     public async remove(
         connection: PoolClient | RemoveObject | undefined,
         punishment?: RemoveObject
@@ -171,6 +194,9 @@ export default class Punishments extends Table<Results.DBPunishment, Parsed.Puni
         return response.rowCount > 0;
     }
 
+    /**
+     * create table if doesn't exist
+     */
     protected async init(connection?: PoolClient): Promise<ValidationState> {
         try {
             await this.query(
@@ -208,6 +234,9 @@ export default class Punishments extends Table<Results.DBPunishment, Parsed.Puni
         }
     }
 
+    /**
+     * parse the raw database data into usable objects
+     */
     protected parse(data: Results.DBPunishment): Parsed.Punishment {
         return {
             id: data.punishment_id,

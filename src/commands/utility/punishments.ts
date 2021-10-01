@@ -57,6 +57,10 @@ export default class Punishments extends SubCommandPluginCommand {
         await super.run(message, args, context);
     }
 
+    /**
+     * Sends a help embed to show all sub commands available
+     * @param message
+     */
     public async help(message: Message): Promise<void> {
         message.channel.send({
             content: `For more help than what is provided in the embed below, click the button below to view bot documentation.`,
@@ -78,6 +82,12 @@ export default class Punishments extends SubCommandPluginCommand {
         });
     }
 
+    /**
+     * Provides multiple embeds of punishments that currently being used.
+     * There is 1 embed per role or user.
+     * Each embed lists lenient and standard punishments
+     * @param message
+     */
     public async list(message: Message): Promise<void> {
         const bot = this.container.client as Bot;
         const punishmentController = bot.getPunishmentController();
@@ -88,7 +98,7 @@ export default class Punishments extends SubCommandPluginCommand {
         const mapPunishments =
             (target: TargetType) =>
             (key: string): MessageEmbedOptions => {
-                const punishment = punishmentController.getPunishment(target, key);
+                const punishment = punishmentController.getPunishments(target, key);
                 if (punishment) return Punishments.LIST_PUNISHMENTS_EMBED(punishment);
                 return {
                     title: `${parsedUserOrRole(target, key)} has no punishments`,
@@ -125,14 +135,20 @@ Run the command \`${CONFIG.bot.prefix}punishments create\` to learn how to creat
         } while (embeds.length > 0);
     }
 
+    /**
+     * Used to create a punishment handler for a specific user or role.
+     * @param message
+     * @param args
+     */
     public async create(message: Message, args: Args): Promise<void> {
-        const parsedArgs = await Punishments.parseCreateArgs(args).catch((err) => {
-            console.error(err);
-            return null;
-        });
+        const parsedArgs = await Punishments.parseCreateArgs(args)
+            .catch((err: Error) => err);
 
-        if (parsedArgs === null) {
+        if (parsedArgs instanceof Error) {
             await message.channel.send({
+                content: parsedArgs.message === 'There are no more arguments.'
+                    ? undefined
+                    : parsedArgs.message,
                 embeds: [Punishments.CREATE_PUNISHMENT_EMBED],
             });
             return;
@@ -167,7 +183,7 @@ Please notify a developer so that we can check the internal logs`,
             } ${getRoleOrUser(parsedArgs)}.
 \`\`\`Punishment Type: ${parsedArgs.type}
 Punishment Target: ${parsedArgs.target}
-Punishment Target Key: ${getRoleOrUser(parsedArgs)}
+Punishment Target Key: ${parsedArgs.targetKey}
 Punishment is lenient: ${parsedArgs.lenient}
 Punishment length ${minutesToReadable(parsedArgs.length)}
 \`\`\``,
@@ -176,6 +192,11 @@ Punishment length ${minutesToReadable(parsedArgs.length)}
         await bot.getPunishmentController().synchronize(true);
     }
 
+    /**
+     * returns all punishments given to a user
+     * @param message
+     * @param args
+     */
     public async for(message: Message, args: Args): Promise<void> {
         let targetUser: User;
 
@@ -210,17 +231,22 @@ Usage: \`${CONFIG.bot.prefix}punishments for (@user|User ID)\``,
             first = false;
         } while (punishments.length > 0);
 
-        console.log(targetUser, punishments);
     }
 
+    /**
+     * removes a punishment option from a specific user or role
+     * @param message
+     * @param args
+     */
     public async remove(message: Message, args: Args): Promise<void> {
-        const parsedArgs = await Punishments.parseRemoveArgs(args).catch((err) => {
-            console.error(err);
-            return null;
-        });
+        const parsedArgs = await Punishments.parseRemoveArgs(args)
+            .catch((err: Error) => err);
 
-        if (parsedArgs === null) {
+        if (parsedArgs instanceof Error) {
             await message.channel.send({
+                content: parsedArgs.message === 'There are no more arguments.'
+                    ? undefined
+                    : parsedArgs.message,
                 embeds: [Punishments.REMOVE_PUNISH_EMBED],
             });
             return;
@@ -256,6 +282,11 @@ Please notify a developer so that we can check the internal logs`,
         await bot.getPunishmentController().synchronize(true);
     }
 
+    /**
+     * internal function used to parse arguments provided in the create command
+     * @param argsObj
+     * @private
+     */
     private static async parseCreateArgs(
         argsObj: Args
     ): Promise<Tables.Punishments.CreateObject> {
@@ -303,6 +334,11 @@ Please notify a developer so that we can check the internal logs`,
         };
     }
 
+    /**
+     * internal function used to parse arguments provided in the remove command
+     * @param argsObj
+     * @private
+     */
     private static async parseRemoveArgs(
         argsObj: Args
     ): Promise<Tables.Punishments.RemoveObject> {
@@ -340,6 +376,10 @@ Please notify a developer so that we can check the internal logs`,
             lenient,
         };
     }
+
+    // ------------------------- //
+    // all embeds provided below //
+    // ------------------------- //
 
     private static LIST_PUNISHMENTS_EMBED = (
         punishments: Parsed.Punishment[]

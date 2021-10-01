@@ -30,6 +30,12 @@ export default class PunishmentController extends Controller {
         this.punishments = this.organizePunishments();
     }
 
+    /**
+     * used to ensure that all punishments are synchronized with the database for the guild.
+     * (It is currently used in a synchronization interval as well as called independently whenever
+     * punishments are created/removed)
+     * @param syncPunishments if true, synchronizes punishments as well as punishment history
+     */
     public async synchronize(syncPunishments = false): Promise<void> {
         const db = this.bot.getDatabase();
         const activePunishments = await db.punishmentHistory.getAllLatest();
@@ -45,6 +51,12 @@ export default class PunishmentController extends Controller {
         await Promise.all(activePunishments.map(sync));
     }
 
+    /**
+     * Creates a guild specific synchronization function used to make sure that
+     * will automatically unban/unmute punished users after their punishment is
+     * no longer active.
+     * @param guild
+     */
     public syncHistory(
         guild: Guild
     ): (punishment: Parsed.PunishmentHistoryWithCount | null) => Promise<void> {
@@ -85,6 +97,13 @@ export default class PunishmentController extends Controller {
         };
     }
 
+    /**
+     * Creates a punishment record for the author of the message and sends discord notification.
+     * The punishment given is dependent upon how many punishments the author has previously
+     * received, along with whether or not the user has a lenient role.
+     * @param message
+     * @param mentions
+     */
     public async punish(message: Message, mentions: FlaggedMention[]): Promise<void> {
         const author = message.author.id;
         const { guild } = message;
@@ -103,9 +122,6 @@ export default class PunishmentController extends Controller {
             true
         );
 
-        // TODO create a lenient role that has lighter punishments
-        //      necessary for the tiered roles to have lighter punishments since they are patrons
-
         const hasLenientRole =
             CONFIG.bot.lenientRoles.findIndex((role) => {
                 return guildMember.roles.resolve(role) !== null;
@@ -117,7 +133,7 @@ export default class PunishmentController extends Controller {
             if (punishments.length > 0) break;
             let key = mention.type === 'user' ? mention.user : undefined;
             if (typeof key === 'undefined' && mention.type === 'role') key = mention.role;
-            punishments.push(...this.getPunishments(mention.type, hasLenientRole, key));
+            punishments.push(...this.getPunishments(mention.type, key, hasLenientRole));
         }
 
         if (punishments.length === 0 && hasLenientRole) {
@@ -150,16 +166,17 @@ export default class PunishmentController extends Controller {
         );
     }
 
-    public isMonitoredMember(author?: GuildMember | null): boolean {
-        const hasMonitoredRole =
-            Object.keys(this.punishments.role).findIndex(
-                (role) => author?.roles.resolve(role) !== null
-            ) >= 0;
-        const isMonitoredUser = this.punishments.user[author?.id || 0] instanceof Array;
-
-        return isMonitoredUser || hasMonitoredRole;
-    }
-
+    /**
+     * Sends a DM to the author that they have been punished.
+     * This DM contains an embed that shows their punishment history along with how long their
+     * punishment will be.
+     * @param message
+     * @param punishment
+     * @param mentions
+     * @param punishmentHistory
+     * @param endsAt
+     * @private
+     */
     private async handleDiscordPunishment(
         message: Message,
         punishment: Punishment,
@@ -246,37 +263,64 @@ export default class PunishmentController extends Controller {
         }
     }
 
+    /**
+     * determine if the selected author is a monitored user by comparing their
+     * roles and user ID to the punishments cache of users and roles
+     * @param author
+     */
+    public isMonitoredMember(author?: GuildMember | null): boolean {
+        const hasMonitoredRole =
+            Object.keys(this.punishments.role).findIndex(
+                (role) => author?.roles.resolve(role) !== null
+            ) >= 0;
+        const isMonitoredUser = this.punishments.user[author?.id || 0] instanceof Array;
+
+        return isMonitoredUser || hasMonitoredRole;
+    }
+
+    /**
+     * simple function to check whether or not the target has any available punishments to give out.
+     * @param target ['user'|'role']
+     * @param targetKey [string]
+     */
     public hasPunishments(target: TargetType, targetKey?: string): boolean {
         if (typeof targetKey === 'string')
             return this.punishments[target][targetKey].length > 0;
         return false;
     }
 
+    /**
+     * returns a list of users that should not be pinged
+     */
     public getBlockedUsers(): string[] {
         return Object.keys(this.punishments.user);
     }
 
+    /**
+     * returns a list of roles that should not be pinged
+     */
     public getBlockedRoles(): string[] {
         return Object.keys(this.punishments.role);
     }
 
-    public getPunishment(target: TargetType, key: string): Punishment[] | null {
-        if (
-            typeof this.punishments[target][key] === 'undefined' ||
-            this.punishments[target][key].length === 0
-        ) {
-            return null;
-        }
-        return [...this.punishments[target][key]];
-    }
-
-    private getPunishments(
+    /**
+     * Gets punishment options for a specific target, key, and leniency
+     * @param target
+     * @param targetKey
+     * @param lenient
+     */
+    public getPunishments(
         target: TargetType,
-        lenient: boolean,
-        targetKey?: string
+        targetKey?: string,
+        lenient?: boolean,
     ): Punishment[] {
         if (!(typeof targetKey === 'string' && this.punishments[target][targetKey]))
             return [];
+
+        if (!lenient) {
+            return [...this.punishments[target][targetKey]]
+        }
+
         const filtered = this.punishments[target][targetKey].filter(
             (k) => k.lenient === lenient
         );
@@ -286,6 +330,11 @@ export default class PunishmentController extends Controller {
         return filtered;
     }
 
+    /**
+     * Used to remap the punishment options received from the databased and put them into a local cache
+     * @param punishments
+     * @private
+     */
     private organizePunishments(punishments?: Punishment[]) {
         const nextCache: PunishmentCache = {
             role: {},

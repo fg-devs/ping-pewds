@@ -27,10 +27,6 @@ export default class MonitoredUsersTable extends Table<
         };
     }
 
-    /**
-     * creates a record for each user that should have pings blocked.
-     * @param ids user ids to have records created for
-     */
     public async initializeUsers(ids: number | number[]): Promise<boolean>;
 
     public async initializeUsers(
@@ -38,6 +34,13 @@ export default class MonitoredUsersTable extends Table<
         ids: number | number[]
     ): Promise<boolean>;
 
+
+    /**
+     * creates a record for each user that should have pings blocked.
+     * *unused now*
+     * @param connection
+     * @param ids user ids to have records created for
+     */
     public async initializeUsers(
         connection?: PoolClient | number | number[],
         ids?: number | number[]
@@ -133,6 +136,9 @@ export default class MonitoredUsersTable extends Table<
         return new Date('01/01/1970');
     }
 
+    /**
+     * return all monitored users
+     */
     public async getAll(connection?: PoolClient): Promise<Array<Parsed.MonitoredUser>> {
         const response = await this.query(connection, `SELECT * FROM ${this.full}`).catch(
             (err) => new SelectError(err)

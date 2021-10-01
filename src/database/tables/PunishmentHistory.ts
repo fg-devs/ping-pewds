@@ -43,6 +43,11 @@ export default class PunishmentHistory extends Table<
 
     public async create(connection: PoolClient, history: HistoryObject): Promise<boolean>;
 
+    /**
+     * Create an actual punishment for a user.
+     * @param connection
+     * @param history
+     */
     public async create(
         connection: PoolClient | HistoryObject | undefined,
         history?: HistoryObject
@@ -129,6 +134,13 @@ export default class PunishmentHistory extends Table<
         includeExpired: boolean
     ): Promise<Array<Parsed.PunishmentHistory>>;
 
+    /**
+     * Get a specific users punishment history
+     * @param connection [PoolClient | string | number | boolean | undefined]
+     * @param userId [string | number | boolean]
+     * @param includeEnded [boolean]
+     * @param includeExpired [boolean]
+     */
     public async getByUserId(
         connection: PoolClient | string | number | undefined,
         userId?: string | number | boolean,
@@ -171,6 +183,10 @@ export default class PunishmentHistory extends Table<
         connection: PoolClient
     ): Promise<Array<Parsed.PunishmentHistoryWithCount | null>>;
 
+    /**
+     * returns the latest active punishment for each user who has been punished by the bot.
+     * @param connection
+     */
     public async getAllLatest(
         connection?: PoolClient
     ): Promise<Array<Parsed.PunishmentHistoryWithCount | null>> {
@@ -202,47 +218,6 @@ export default class PunishmentHistory extends Table<
         });
     }
 
-    public async getAllActive(): Promise<Array<Parsed.PunishmentHistoryWithCount | null>>;
-
-    public async getAllActive(
-        connection: PoolClient
-    ): Promise<Array<Parsed.PunishmentHistoryWithCount | null>>;
-
-    public async getAllActive(
-        connection?: PoolClient
-    ): Promise<Array<Parsed.PunishmentHistoryWithCount | null>> {
-        // original query that didn't have the total number of active punishments
-        const sql1 = `SELECT DISTINCT ON(${this.mappedKeys.userId}) * FROM ${this.full} WHERE
-                (${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.endsAt} IS NULL)
-                AND (${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR ${this.mappedKeys.expiresAt} IS NULL)
-            ORDER BY ${this.mappedKeys.userId}, ${this.mappedKeys.id} DESC;`;
-
-        const response = await this.query<Results.DBPunishmentHistoryWithCount>(
-            connection,
-            `SELECT DISTINCT ON(${this.mappedKeys.userId}) *, (
-                SELECT count(*) as count FROM ${this.full} b
-                    WHERE b.${this.mappedKeys.userId} = a.${this.mappedKeys.userId}
-                    AND (b.${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR b.${this.mappedKeys.endsAt} IS NULL)
-                    AND (b.${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR b.${this.mappedKeys.expiresAt} IS NULL)
-                ) FROM ${this.full} a WHERE
-                    (a.${this.mappedKeys.endsAt} >= EXTRACT(EPOCH FROM NOW()) OR a.${this.mappedKeys.endsAt} IS NULL)
-                    AND (a.${this.mappedKeys.expiresAt} >= EXTRACT(EPOCH FROM NOW()) OR a.${this.mappedKeys.expiresAt} IS NULL);`
-        ).catch((err) => new SelectError(err));
-
-        if (response instanceof DatabaseError) throw response;
-
-        return response.rows.map((item) => {
-            const parsed = this.parse(item);
-            if (parsed) {
-                return {
-                    ...parsed,
-                    count: Number.parseInt(item.count, 10),
-                };
-            }
-            return null;
-        });
-    }
-
     public async setActive(id: string | number, active: boolean): Promise<boolean>;
 
     public async setActive(
@@ -251,6 +226,12 @@ export default class PunishmentHistory extends Table<
         active: boolean
     ): Promise<boolean>;
 
+    /**
+     * sets the selected punishment's active state to the state you provide.
+     * @param connection [PoolClient | string | number | undefined]
+     * @param id [string | number | boolean]
+     * @param active [boolean | undefined]
+     */
     public async setActive(
         connection: PoolClient | string | number | undefined,
         id: string | number | boolean,
@@ -273,6 +254,9 @@ export default class PunishmentHistory extends Table<
         return response.rowCount > 0;
     }
 
+    /**
+     * Create table if it does not exist
+     */
     protected async init(connection?: PoolClient): Promise<ValidationState> {
         try {
             if (typeof connection === 'undefined') connection = await this.acquire();
@@ -314,6 +298,9 @@ export default class PunishmentHistory extends Table<
         }
     }
 
+    /**
+     * parse the raw database data into usable objects
+     */
     protected parse(data: Results.DBPunishmentHistory): Parsed.PunishmentHistory {
         return {
             id: data.history_id,
