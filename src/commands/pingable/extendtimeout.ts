@@ -66,7 +66,7 @@ Please note that this command should only be used if you plan on going AFK. Once
             });
 
             setTimeout(() => {
-                notification.delete()
+                notification.delete();
             }, 10000);
         }
 

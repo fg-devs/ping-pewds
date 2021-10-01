@@ -45,7 +45,7 @@ export default class ClearTimeout extends Command {
             });
 
             setTimeout(() => {
-                notification.delete()
+                notification.delete();
             }, 10000);
         }
 
