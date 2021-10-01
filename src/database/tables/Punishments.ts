@@ -124,9 +124,7 @@ export default class Punishments extends Table<Results.DBPunishment, Parsed.Puni
      * @param connection [PoolClient | undefined]
      * @returns Promise<Parsed.Punishment[]>
      */
-    public async getAllActive(
-        connection?: PoolClient
-    ): Promise<Parsed.Punishment[]> {
+    public async getAllActive(connection?: PoolClient): Promise<Parsed.Punishment[]> {
         const response = await this.query<Results.DBPunishment>(
             connection,
             `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.active} = 1

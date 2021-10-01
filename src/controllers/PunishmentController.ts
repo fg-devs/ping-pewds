@@ -312,13 +312,13 @@ export default class PunishmentController extends Controller {
     public getPunishments(
         target: TargetType,
         targetKey?: string,
-        lenient?: boolean,
+        lenient?: boolean
     ): Punishment[] {
         if (!(typeof targetKey === 'string' && this.punishments[target][targetKey]))
             return [];
 
         if (!lenient) {
-            return [...this.punishments[target][targetKey]]
+            return [...this.punishments[target][targetKey]];
         }
 
         const filtered = this.punishments[target][targetKey].filter(

@@ -141,14 +141,16 @@ Run the command \`${CONFIG.bot.prefix}punishments create\` to learn how to creat
      * @param args
      */
     public async create(message: Message, args: Args): Promise<void> {
-        const parsedArgs = await Punishments.parseCreateArgs(args)
-            .catch((err: Error) => err);
+        const parsedArgs = await Punishments.parseCreateArgs(args).catch(
+            (err: Error) => err
+        );
 
         if (parsedArgs instanceof Error) {
             await message.channel.send({
-                content: parsedArgs.message === 'There are no more arguments.'
-                    ? undefined
-                    : parsedArgs.message,
+                content:
+                    parsedArgs.message === 'There are no more arguments.'
+                        ? undefined
+                        : parsedArgs.message,
                 embeds: [Punishments.CREATE_PUNISHMENT_EMBED],
             });
             return;
@@ -230,7 +232,6 @@ Usage: \`${CONFIG.bot.prefix}punishments for (@user|User ID)\``,
             });
             first = false;
         } while (punishments.length > 0);
-
     }
 
     /**
@@ -239,14 +240,16 @@ Usage: \`${CONFIG.bot.prefix}punishments for (@user|User ID)\``,
      * @param args
      */
     public async remove(message: Message, args: Args): Promise<void> {
-        const parsedArgs = await Punishments.parseRemoveArgs(args)
-            .catch((err: Error) => err);
+        const parsedArgs = await Punishments.parseRemoveArgs(args).catch(
+            (err: Error) => err
+        );
 
         if (parsedArgs instanceof Error) {
             await message.channel.send({
-                content: parsedArgs.message === 'There are no more arguments.'
-                    ? undefined
-                    : parsedArgs.message,
+                content:
+                    parsedArgs.message === 'There are no more arguments.'
+                        ? undefined
+                        : parsedArgs.message,
                 embeds: [Punishments.REMOVE_PUNISH_EMBED],
             });
             return;

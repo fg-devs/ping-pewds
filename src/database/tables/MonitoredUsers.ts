@@ -34,7 +34,6 @@ export default class MonitoredUsersTable extends Table<
         ids: number | number[]
     ): Promise<boolean>;
 
-
     /**
      * creates a record for each user that should have pings blocked.
      * *unused now*
