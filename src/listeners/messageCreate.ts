@@ -2,7 +2,7 @@ import { Listener } from '@sapphire/framework';
 import { Message } from 'discord.js';
 import Bot from '../Bot';
 
-class MessageEvent extends Listener<'message'> {
+class MessageCreateEvent extends Listener<'messageCreate'> {
     public async run(message: Message): Promise<void> {
         const bot = this.container.client as Bot;
 
@@ -15,4 +15,4 @@ class MessageEvent extends Listener<'message'> {
     }
 }
 
-export default MessageEvent;
+export default MessageCreateEvent;
