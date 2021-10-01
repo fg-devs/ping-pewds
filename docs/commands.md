@@ -31,7 +31,7 @@ will be punished.
 ____
 
 ## Moderation Commands
-##### These commands are used to maintain punishment options
+##### These commands are used to maintain punishment options and should only be available to those with a moderator role (that is contained in `moderatorRoles` in configuration)
 ___
 
 ### Punishments Help
