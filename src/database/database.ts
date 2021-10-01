@@ -1,8 +1,10 @@
 import { Pool, PoolConfig, DatabaseError, PoolClient } from 'pg';
-import winston from 'winston';
 import Table from './models/Table';
-import BlockedUsersTable from './tables/BlockedUsers';
 import Bot from '../Bot';
+import { BotLogger } from '../utils/logger';
+import MonitoredUsersTable from './tables/MonitoredUsers';
+import PunishmentHistory from './tables/PunishmentHistory';
+import Punishments from './tables/Punishments';
 
 type CustomizedConfig = PoolConfig & {
     schema: string;
@@ -17,9 +19,13 @@ export default class DatabaseManager {
 
     private readonly username?: string;
 
-    private readonly logger: winston.Logger;
+    private readonly logger: BotLogger;
 
-    public readonly blockedUsers: BlockedUsersTable;
+    public readonly monitoredUsers: MonitoredUsersTable;
+
+    public readonly punishmentHistory: PunishmentHistory;
+
+    public readonly punishments: Punishments;
 
     constructor(config: CustomizedConfig) {
         const { schema, ...poolConfig } = config;
@@ -28,7 +34,10 @@ export default class DatabaseManager {
         this.schema = schema;
         this.escapedSchema = `"${schema}"`;
 
-        this.blockedUsers = new BlockedUsersTable(this);
+        this.monitoredUsers = new MonitoredUsersTable(this);
+        this.punishmentHistory = new PunishmentHistory(this);
+        this.punishments = new Punishments(this);
+
         this.logger = DatabaseManager.getLogger();
     }
 
@@ -97,7 +106,7 @@ export default class DatabaseManager {
             .filter((table) => typeof table !== 'undefined') as Table[];
     }
 
-    public static getLogger(section?: string): winston.Logger {
-        return Bot.getLogger(`Database${!!section && `::${section}`}`);
+    public static getLogger(section?: string): BotLogger {
+        return Bot.getLogger(`[Database${!!section && `::${section}`}]`);
     }
 }

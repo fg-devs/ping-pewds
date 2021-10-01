@@ -5,9 +5,9 @@ class BotConfig extends Conf {
 
     public readonly prefix: string;
 
-    public readonly owners: string[];
+    public readonly guild: string;
 
-    public readonly block: string[];
+    public readonly owners: string[];
 
     public readonly blockTimeout: number;
 
@@ -17,19 +17,31 @@ class BotConfig extends Conf {
 
     public readonly notifyRoles: string[];
 
+    public readonly moderatorRoles: string[];
+
     public readonly notifyChannels: string[];
+
+    public readonly lenientRoles: string[];
+
+    public readonly muteRole: string;
+
+    public readonly dryrun: boolean;
 
     constructor() {
         super('bot');
         this.token = 'BotToken';
         this.prefix = '!';
+        this.guild = '';
         this.owners = ['id1', 'id2'];
-        this.block = [];
         this.excludedChannels = [];
         this.blockTimeout = 10;
         this.notifyTimeout = 10;
         this.notifyRoles = [];
         this.notifyChannels = [];
+        this.lenientRoles = [];
+        this.moderatorRoles = [];
+        this.muteRole = '';
+        this.dryrun = false;
     }
 }
 

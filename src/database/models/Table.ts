@@ -1,11 +1,8 @@
 import { PoolClient, QueryResult } from 'pg';
-import winston from 'winston';
 import DatabaseManager from '../database';
 import { DatabaseError } from '../errors';
 import { DBParsed, DBTable, ValidationState, ValueObject } from '../types';
-import getLogger from '../../utils/logger';
-
-const logger = getLogger('database:table');
+import { BotLogger } from '../../utils/logger';
 
 export default class Table<Row = DBTable, Parsed = DBParsed> {
     protected readonly manager: DatabaseManager;
@@ -140,6 +137,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
      */
     public async drop(connection?: PoolClient): Promise<void> {
         await this.query(connection, `DROP TABLE IF EXISTS ${this.full};`);
+        this.state = ValidationState.NOT_PROCESSED;
     }
 
     /**
@@ -170,8 +168,13 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
                     break;
                 case ValidationState.HAS_ADDITIONAL_INIT:
                     this.state = await this.init(connection);
-                    logger.verbose(`${this.full} required additional initialization.`);
+                    this.getLogger().debug(
+                        `${this.full} required additional initialization.`
+                    );
                     await this.validate(connection);
+                    break;
+                case ValidationState.VALIDATED:
+                    // noop
                     break;
                 default:
                     throw new DatabaseError(
@@ -181,7 +184,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
             }
         } else {
             this.state = await this.init(connection);
-            logger.verbose(`${this.name} table created.`);
+            this.getLogger().debug(`${this.name} table created.`);
             if (this.state >= ValidationState.NEEDS_MIGRATION) {
                 await this.validate(connection);
             }
@@ -215,7 +218,7 @@ export default class Table<Row = DBTable, Parsed = DBParsed> {
         throw new Error(`Table init for ${this.full} has not been implemented.`);
     }
 
-    protected getLogger(): winston.Logger {
+    protected getLogger(): BotLogger {
         return DatabaseManager.getLogger(`Table::${this.name}`);
     }
 }

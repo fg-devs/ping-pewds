@@ -1,13 +1,17 @@
 bot:
+  dryrun: false         # this skips the actual punishment if true, but displays and updates database as usual
   token: 'BotToken'
   prefix: '!'
+  guild: ''             # the guild that the bot will be attached to
   owners: ['id1', 'id2']
   blockTimeout: 10      # delay in minutes to stop blocking pings if a specific user has spoken
-  block: []             # User IDs that will the bot will listen for mentions of
   notifyTimeout: 10     # delay in minutes until notified roles will be alerted that the blocked users are no longer active
   notifyRoles: []       # Role IDs that will get notified when a blocked user is active
   notifyChannels: []    # Channel IDs that will get notified when a blocked user is active
   excludedChannels: []  # Channel IDs that should be ignored by the bot
+  moderatorRoles: []     # Role IDs that are considered moderators or administrators
+  lenientRoles: []      # Role IDs that when punished, will have lighter punishments
+  muteRole: ''          # the Role ID that will be assigned to muted users
 database:
   host: 'localhost'
   port: 5432

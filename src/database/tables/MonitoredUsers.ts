@@ -2,22 +2,22 @@ import { PoolClient } from 'pg';
 import Table from '../models/Table';
 import { Parsed, Results, ValidationState } from '../types';
 import DatabaseManager from '../database';
-import { InsertError, SelectError, UpdateError } from '../errors';
+import { DatabaseError, InsertError, SelectError, UpdateError } from '../errors';
 
-export default class BlockedUsersTable extends Table<
-    Results.DBBlockedUser,
-    Parsed.BlockedUser
+export default class MonitoredUsersTable extends Table<
+    Results.DBMonitoredUser,
+    Parsed.MonitoredUser
 > {
-    protected readonly accepted: Array<keyof Parsed.BlockedUser>;
+    protected readonly accepted: Array<keyof Parsed.MonitoredUser>;
 
-    protected readonly nullables: Array<keyof Parsed.BlockedUser>;
+    protected readonly nullables: Array<keyof Parsed.MonitoredUser>;
 
     protected readonly mappedKeys: {
-        [s in keyof Parsed.BlockedUser]: keyof Results.DBBlockedUser;
+        [s in keyof Parsed.MonitoredUser]: keyof Results.DBMonitoredUser;
     };
 
     constructor(manager: DatabaseManager) {
-        super(manager, 'blocked_users');
+        super(manager, 'monitored_users');
         this.nullables = ['lastMessage'];
         this.accepted = ['id', 'lastMessage'];
 
@@ -27,10 +27,6 @@ export default class BlockedUsersTable extends Table<
         };
     }
 
-    /**
-     * creates a record for each user that should have pings blocked.
-     * @param ids user ids to have records created for
-     */
     public async initializeUsers(ids: number | number[]): Promise<boolean>;
 
     public async initializeUsers(
@@ -38,6 +34,12 @@ export default class BlockedUsersTable extends Table<
         ids: number | number[]
     ): Promise<boolean>;
 
+    /**
+     * creates a record for each user that should have pings blocked.
+     * *unused now*
+     * @param connection
+     * @param ids user ids to have records created for
+     */
     public async initializeUsers(
         connection?: PoolClient | number | number[],
         ids?: number | number[]
@@ -57,13 +59,13 @@ export default class BlockedUsersTable extends Table<
             ids
         ).catch((err) => new InsertError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rowCount > 0;
     }
 
     /**
-     * Updates the timestamp for the last message send by the user id provided
+     * Inserts or Updates the timestamp for the last message send by the user id provided
      * @param id user id to have record updated
      * @param timestamp the timestamp to be updated to
      */
@@ -88,11 +90,14 @@ export default class BlockedUsersTable extends Table<
 
         const response = await this.query(
             connection as PoolClient | undefined,
-            `UPDATE ${this.full} SET ${this.mappedKeys.lastMessage} = $2 WHERE ${this.mappedKeys.id} = $1;`,
+            `INSERT INTO ${this.full}
+                (${this.mappedKeys.id}, ${this.mappedKeys.lastMessage})
+                VALUES ($1, $2) ON CONFLICT (${this.mappedKeys.id})
+                DO UPDATE SET ${this.mappedKeys.lastMessage} = $2`,
             [id, timestamp as number]
         ).catch((err) => new UpdateError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rowCount === 1;
     }
@@ -114,13 +119,13 @@ export default class BlockedUsersTable extends Table<
             connection = undefined;
         }
 
-        const response = await this.query<Results.DBBlockedUser>(
+        const response = await this.query<Results.DBMonitoredUser>(
             connection as PoolClient | undefined,
             `SELECT ${this.mappedKeys.lastMessage} FROM ${this.full} WHERE ${this.mappedKeys.id} = $1`,
             [id as number]
         ).catch((err) => new SelectError(err));
 
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         if (response.rows.length === 1) {
             const date = new Date();
@@ -131,38 +136,14 @@ export default class BlockedUsersTable extends Table<
     }
 
     /**
-     * returns an array for the entire record for the selected user id(s)
-     * @param ids users ids to fetch
+     * return all monitored users
      */
-    public async getById(
-        ids: number | number[]
-    ): Promise<Array<Parsed.BlockedUser | null>>;
+    public async getAll(connection?: PoolClient): Promise<Array<Parsed.MonitoredUser>> {
+        const response = await this.query(connection, `SELECT * FROM ${this.full}`).catch(
+            (err) => new SelectError(err)
+        );
 
-    public async getById(
-        connection: PoolClient,
-        ids: number | number[]
-    ): Promise<Array<Parsed.BlockedUser | null>>;
-
-    public async getById(
-        connection: PoolClient | number | number[] | undefined,
-        ids?: number | number[]
-    ): Promise<Array<Parsed.BlockedUser | null>> {
-        if (connection instanceof Array || typeof connection === 'number') {
-            ids = connection;
-            connection = undefined;
-        }
-        if (typeof ids === 'undefined')
-            throw new InsertError('No ids entered to initialize.');
-        if (typeof ids === 'number') ids = [ids];
-        const params = ids.map((noop, idx) => `$${idx + 1}`).join(',');
-
-        const response = await this.query<Results.DBBlockedUser>(
-            connection as PoolClient | undefined,
-            `SELECT * FROM ${this.full} WHERE ${this.mappedKeys.id} IN (${params});`,
-            ids
-        ).catch((err) => new SelectError(err));
-
-        if (response instanceof Error) throw response;
+        if (response instanceof DatabaseError) throw response;
 
         return response.rows.map(this.parse);
     }
@@ -206,13 +187,10 @@ export default class BlockedUsersTable extends Table<
      * @param data
      * @protected
      */
-    protected parse(data?: Results.DBBlockedUser): Parsed.BlockedUser | null {
-        if (data) {
-            return {
-                id: data.user_id,
-                lastMessage: Number.parseInt(`${data.user_last_message}`, 10),
-            };
-        }
-        return null;
+    protected parse(data: Results.DBMonitoredUser): Parsed.MonitoredUser {
+        return {
+            id: data.user_id,
+            lastMessage: Number.parseInt(`${data.user_last_message}`, 10),
+        };
     }
 }

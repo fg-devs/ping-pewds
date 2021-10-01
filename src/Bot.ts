@@ -1,29 +1,36 @@
-import { CommandoClient, CommandoMessage } from 'discord.js-commando';
-import winston from 'winston';
+import { SapphireClient } from '@sapphire/framework';
 import { CONFIG } from './globals';
-import getLogger from './utils/logger';
-import IssueHandler from './IssueHandler';
-import EventHandler from './EventHandler';
+import { BotLogger } from './utils/logger';
 import { PingableUserController } from './controllers/PingableUserController';
 import DatabaseManager from './database/database';
 import { PingController } from './controllers/PingController';
-import ExtendTimeout from './commands/pingable/extendtimeout';
-import ClearTimeout from './commands/pingable/cleartimeout';
+import PunishmentController from './controllers/PunishmentController';
 
-class Bot extends CommandoClient {
-    private readonly events: EventHandler;
-
+class Bot extends SapphireClient {
     private readonly pingableUserController: PingableUserController;
 
     private readonly pingController: PingController;
 
+    private readonly punishmentController: PunishmentController;
+
     private readonly database: DatabaseManager;
+
+    private readonly synchronizeTimeout: number;
+
+    private synchronizeLoop: NodeJS.Timeout | undefined;
 
     constructor() {
         super({
-            commandPrefix: CONFIG.bot.prefix,
-            owner: CONFIG.bot.owners,
+            intents: ['GUILDS', 'GUILD_MESSAGE_REACTIONS', 'GUILD_MESSAGES'],
+            defaultPrefix: CONFIG.bot.prefix,
+            id: CONFIG.bot.token,
+            caseInsensitiveCommands: true,
+            logger: {
+                instance: BotLogger.getInstance(),
+            },
         });
+
+        this.synchronizeTimeout = 1000 * 60; // 1 minute
 
         this.database = new DatabaseManager({
             host: CONFIG.database.host,
@@ -37,30 +44,7 @@ class Bot extends CommandoClient {
 
         this.pingableUserController = new PingableUserController(this);
         this.pingController = new PingController(this);
-
-        this.events = new EventHandler(this);
-        this.registerEvents();
-
-        this.dispatcher.addInhibitor(this.inhibitor.bind(this));
-
-        this.registry
-            .registerDefaults()
-            .registerDefaultGroups()
-            .registerDefaultCommands({
-                help: false,
-                unknownCommand: false,
-                commandState: false,
-                eval: false,
-                prefix: false,
-                ping: false,
-            })
-            .registerGroups([['pingable', 'Commands for Pingable users']]);
-        // .registerCommandsIn(path.join(__dirname, './commands'))
-
-        // TODO replace this with .registerCommandsIn()
-        //      for some reason I can't get the commands to load from there
-        //      so I am forced to register them manually
-        this.registry.registerCommands([ExtendTimeout, ClearTimeout]);
+        this.punishmentController = new PunishmentController(this);
     }
 
     /**
@@ -68,33 +52,16 @@ class Bot extends CommandoClient {
      */
     public async start(): Promise<void> {
         await this.database.init();
-        await this.pingableUserController.init();
         await this.login(CONFIG.bot.token);
-    }
-
-    /**
-     * Register message listeners and command handlers
-     * @private
-     */
-    private registerEvents(): void {
-        const issues = new IssueHandler();
-        this.on('commandError', issues.onCommandError.bind(issues))
-            .on('commandRun', issues.onCommandRun.bind(issues))
-            .on('commandRegister', issues.onCommandRegister.bind(issues));
-
-        this.on('message', this.events.onMessage.bind(this.events));
-
-        this.once('ready', this.events.onReady.bind(this.events));
-    }
-
-    /**
-     * checks to see if the message starts with commandPrefix and message is not within a guild
-     * @param msg
-     * @private
-     */
-    private inhibitor(msg: CommandoMessage): false | string {
-        const passes = msg.content.startsWith(this.commandPrefix) && msg.guild !== null;
-        return passes ? false : '';
+        await this.punishmentController.synchronize(true);
+        await this.pingableUserController.init();
+        this.synchronizeLoop = setInterval(
+            () =>
+                this.punishmentController
+                    .synchronize()
+                    .catch((err) => Bot.getLogger('synchronization').error(err)),
+            this.synchronizeTimeout
+        );
     }
 
     public getPingableUserController(): PingableUserController {
@@ -105,12 +72,16 @@ class Bot extends CommandoClient {
         return this.pingController;
     }
 
+    public getPunishmentController(): PunishmentController {
+        return this.punishmentController;
+    }
+
     public getDatabase(): DatabaseManager {
         return this.database;
     }
 
-    public static getLogger(section: string): winston.Logger {
-        return getLogger(`Bot::${section}`);
+    public static getLogger(section: string): BotLogger {
+        return BotLogger.getInstance().getTitledInstance(section);
     }
 }
 

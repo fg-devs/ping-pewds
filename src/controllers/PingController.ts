@@ -2,6 +2,8 @@ import { Message } from 'discord.js';
 import Controller from './controller';
 import Bot from '../Bot';
 import { CONFIG } from '../globals';
+import { FlaggedMention } from './PunishmentController';
+import { sentByAuthorizedUser } from '../utils';
 
 export class PingController extends Controller {
     constructor(bot: Bot) {
@@ -12,12 +14,15 @@ export class PingController extends Controller {
      * checks for messages that include pings of users who should not be pinged
      * if a ping is found, it is removed and a message is sent to the channel
      * telling the user to not ping this user.
-     * @todo handle punishments
      */
     public async handleMessage(message: Message): Promise<boolean> {
+        const punishmentController = this.bot.getPunishmentController();
+        const author = message.guild?.members.resolve(message.author.id);
+
         if (
             message.author.bot ||
-            CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0
+            CONFIG.bot.excludedChannels.indexOf(message.channel.id) >= 0 ||
+            sentByAuthorizedUser(author)
         )
             return false;
 
@@ -26,35 +31,34 @@ export class PingController extends Controller {
 
         const pingedUsers: string[] = [];
         let canPing = true;
-        for (const mentionId of flaggedMentions) {
-            if (!this.canPing(mentionId)) {
-                canPing = false;
-                const flaggedMention = message.mentions.users.get(mentionId);
-                if (flaggedMention) {
-                    pingedUsers.push(`<@${flaggedMention.id}>`);
-                    this.getLogger().info(
-                        `A mention of '${flaggedMention.username}' was caught and  is pending deletion.`
-                    );
-                }
-            }
-        }
 
-        if (!canPing) {
-            await message.delete().catch(this.handleError);
-            const notification = await message.channel
-                .send({
-                    content: `Please do not ping ${pingedUsers.join(
-                        ', '
-                    )} unless they are active.`,
-                    allowedMentions: { users: [] },
-                })
-                .catch(this.handleError);
+        flaggedMentions.forEach((mention) => {
+            if (this.canPing(mention.user)) return;
+            const flaggedUser = message.mentions.users.get(mention.user);
+            if (typeof flaggedUser === 'undefined') return;
+            canPing = false;
+            pingedUsers.push(`<@${flaggedUser.id}>`);
+            this.getLogger().info(
+                `A mention of '${flaggedUser.username}' was caught and  is pending deletion.`
+            );
+        });
 
-            // TODO handle punishments
+        if (canPing) return false;
 
-            if (notification) {
-                await notification.delete({ timeout: 10000 }).catch(this.handleError);
-            }
+        await message.delete().catch(this.handleError);
+        const notification = await message.channel
+            .send({
+                content: `Please do not ping ${pingedUsers.join(
+                    ', '
+                )} unless they are active.`,
+                allowedMentions: { users: [] },
+            })
+            .catch(this.handleError);
+
+        await punishmentController.punish(message, flaggedMentions);
+
+        if (notification) {
+            setTimeout(() => notification.delete(), 5000);
         }
 
         return true;
@@ -64,8 +68,35 @@ export class PingController extends Controller {
      * checks to see if the message contains any pings of users that should not be pinged
      * and returns all the user id that are mentioned that should not be.
      */
-    private getFlaggedMentions(message: Message): string[] {
-        return CONFIG.bot.block.filter((id) => message.mentions.has(id));
+    private getFlaggedMentions(message: Message): FlaggedMention[] {
+        const punishmentController = this.bot.getPunishmentController();
+        const mentions: FlaggedMention[] = [];
+
+        const blockedUsers = punishmentController.getBlockedUsers();
+        blockedUsers.forEach((blocked) => {
+            if (message.mentions.has(blocked)) {
+                mentions.push({
+                    user: blocked,
+                    type: 'user',
+                });
+            }
+        });
+
+        const blockedRoles = punishmentController.getBlockedRoles();
+        blockedRoles.forEach((role) => {
+            const exists = message.mentions.members?.find((user) => {
+                return user.roles.resolve(role) !== null;
+            });
+            if (exists) {
+                mentions.push({
+                    user: exists.id,
+                    role,
+                    type: 'role',
+                });
+            }
+        });
+
+        return mentions;
     }
 
     /**

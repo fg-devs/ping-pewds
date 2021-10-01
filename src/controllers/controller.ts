@@ -4,8 +4,8 @@
  * @property {string}  name Name of the controller (for logging purposes)
  * @property {Bot} bot bot to get a logger instance
  */
-import winston from 'winston';
 import Bot from '../Bot';
+import { BotLogger } from '../utils/logger';
 
 class Controller {
     private readonly name: string;
@@ -25,8 +25,8 @@ class Controller {
         return null;
     };
 
-    protected getLogger(): winston.Logger {
-        return Bot.getLogger(`Controller::${this.name}`);
+    protected getLogger(): BotLogger {
+        return Bot.getLogger(`[Controller::${this.name}]`);
     }
 }
 

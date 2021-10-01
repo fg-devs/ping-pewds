@@ -1,6 +1,10 @@
-# Discord Ping Blocker
+![ESLint](https://github.com/NewCircuit/ping-pewds/actions/workflows/eslint.yml/badge.svg?style=flat-square)
 
-This is a Discord bot written in Typescript, using Discord Commando.
+# Discord Ping Blocker (ping-pewds)
+
+### This is a Discord bot written in Typescript, using the [Sapphire Framework](https://www.sapphirejs.dev/)
+
+#### [View Available Commands](docs/commands.md)
 
 ## Requirements
 * [NodeJS](https://nodejs.org/)
@@ -39,8 +43,10 @@ npm run pm2
 ### Bot specific configuration
 |Key|Default|Description|
 |---|---|---|
+|dryrun|`false`|Prevents actually performing the discord punishment, however will insert a record into the database|
 |token|None|The oauth bot token provided by Discord|
 |prefix|`!`|The string the bot looks for to indicate a command is fired|
+|guild|None|The Guild ID to monitor (currently only watches one guild)|
 |owners|`[]`|An array of owner snowflakes|
 |blockTimeout|`10`|The delay in minutes to stop blocking pings if a `block`ed user has spoken|
 |block|`[]`|The user IDs that the bot will listen for and block mentions of|
@@ -48,6 +54,9 @@ npm run pm2
 |notifyRoles|`[]`|The role IDs that will get notified when a `block`ed user becomes active|
 |notifyChannels|`[]`|The channel IDs that a message will be sent to notify `notifyRoles`|
 |excludedChannels|`[]`|The channel IDs that the bot will completely ignore|
+|moderatorRoles|`[]`|The role IDs that the bot should consider moderators|
+|lenientRoles|`[]`|The role IDs that should be considered lenient when punishing|
+|muteRole|`''`|The role ID that will be assigned to *mute* them.|
 
 ### Database specific configuration
 |Key|Default|Description|

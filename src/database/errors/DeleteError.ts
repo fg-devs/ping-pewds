@@ -9,16 +9,7 @@ export default class DeleteError extends DatabaseError {
     constructor(error: DBError, message: string);
 
     constructor(error?: DBError | string, message?: string) {
-        if (!(error instanceof DBError) && typeof message === 'undefined') {
-            message = error;
-        }
-        if (error instanceof DBError && typeof message === 'undefined') {
-            message = error.message;
-        }
-
-        if (error instanceof Error) super(error, DatabaseError.DELETE_ERROR, message);
-        else super(DatabaseError.DELETE_ERROR, message);
-
+        super(error, message);
         this.name = DatabaseError.DELETE_ERROR;
     }
 }
