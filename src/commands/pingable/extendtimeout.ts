@@ -64,7 +64,10 @@ Please note that this command should only be used if you plan on going AFK. Once
                     CONFIG.bot.blockTimeout
                 } minutes** after your last message.`,
             });
-            // await notification.delete();
+
+            setTimeout(() => {
+                notification.delete()
+            }, 10000);
         }
 
         return null;

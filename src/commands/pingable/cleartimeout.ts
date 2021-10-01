@@ -43,7 +43,10 @@ export default class ClearTimeout extends Command {
             const notification = await msg.channel.send({
                 content: `<@${author}>, you'll no longer be able to be pinged.`,
             });
-            // await notification.delete();
+
+            setTimeout(() => {
+                notification.delete()
+            }, 10000);
         }
 
         return null;
